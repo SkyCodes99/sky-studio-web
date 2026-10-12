@@ -1,0 +1,84 @@
+{
+  "plugins": [
+    {
+      "file": "ring-mod.skyplugin",
+      "id": "skystudio.ringmod",
+      "name": "Ring Mod",
+      "kind": "effect",
+      "desc": "Multiplies the sound by a tone for robotic, metallic, bell-like textures.",
+      "version": "1.0"
+    },
+    {
+      "file": "auto-wah.skyplugin",
+      "id": "skystudio.autowah",
+      "name": "Auto Wah",
+      "kind": "effect",
+      "desc": "A filter that opens up when the sound gets louder — funky wah on guitars, keys and bass.",
+      "version": "1.0"
+    },
+    {
+      "file": "tape-wobble.skyplugin",
+      "id": "skystudio.tapewobble",
+      "name": "Tape Wobble",
+      "kind": "effect",
+      "desc": "Slow pitch drift and flutter like an old cassette or warped record.",
+      "version": "1.0"
+    },
+    {
+      "file": "exciter.skyplugin",
+      "id": "skystudio.exciter",
+      "name": "Exciter",
+      "kind": "effect",
+      "desc": "Adds sparkle and air by generating new high harmonics.",
+      "version": "1.0"
+    },
+    {
+      "file": "trance-gate.skyplugin",
+      "id": "skystudio.trancegate",
+      "name": "Trance Gate",
+      "kind": "effect",
+      "desc": "Chops pads and chords into rhythmic pulses with a step pattern.",
+      "version": "1.0"
+    },
+    {
+      "file": "glass-harp.skyplugin",
+      "id": "skystudio.glassharp",
+      "name": "Glass Harp",
+      "kind": "instrument",
+      "desc": "Airy, shimmering glass tones that bloom and fade slowly.",
+      "version": "1.0"
+    },
+    {
+      "file": "fm-marimba.skyplugin",
+      "id": "skystudio.fmmarimba",
+      "name": "FM Marimba",
+      "kind": "instrument",
+      "desc": "A woody, hollow mallet sound made with frequency modulation.",
+      "version": "1.0"
+    },
+    {
+      "file": "rubber-pluck.skyplugin",
+      "id": "skystudio.rubberpluck",
+      "name": "Rubber Pluck",
+      "kind": "instrument",
+      "desc": "A bouncy, string-like pluck (Karplus-Strong) with a rubbery low end.",
+      "version": "1.0"
+    },
+    {
+      "file": "retrowave-pack.skyplugin",
+      "id": "skystudio.retrowave",
+      "name": "Retrowave Pack",
+      "kind": "patches",
+      "desc": "Eight 80s-style Sky Synth sounds: neon leads, gated pads, analog bass.",
+      "version": "1.0"
+    },
+    {
+      "file": "chill-keys-pack.skyplugin",
+      "id": "skystudio.chillkeys",
+      "name": "Chill Keys Pack",
+      "kind": "patches",
+      "desc": "Six soft, mellow Sky Synth sounds for lo-fi and chill songs.",
+      "version": "1.0"
+    }
+  ]
+}

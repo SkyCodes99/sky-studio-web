@@ -1,0 +1,46 @@
+{
+  "skyplugin": 1,
+  "version": "1.0",
+  "author": "Sky Studio",
+  "id": "skystudio.tapewobble",
+  "kind": "effect",
+  "name": "Tape Wobble",
+  "color": "#c98f5a",
+  "desc": "Slow pitch drift and flutter like an old cassette or warped record.",
+  "params": [
+    {
+      "id": "wow",
+      "label": "Wow",
+      "min": 0,
+      "max": 1,
+      "def": 0.4,
+      "unit": "%"
+    },
+    {
+      "id": "flutter",
+      "label": "Flutter",
+      "min": 0,
+      "max": 1,
+      "def": 0.25,
+      "unit": "%"
+    },
+    {
+      "id": "rate",
+      "label": "Speed",
+      "min": 0.2,
+      "max": 3,
+      "def": 0.7,
+      "unit": "Hz",
+      "log": true
+    },
+    {
+      "id": "tone",
+      "label": "Dullness",
+      "min": 0,
+      "max": 1,
+      "def": 0.3,
+      "unit": "%"
+    }
+  ],
+  "dsp": "function create(sr) {\n  const N = 4096, M = N - 1, bl = new Float32Array(N), br = new Float32Array(N);\n  let w = 0, ph1 = 0, ph2 = 0, ph3 = 0, lpl = 0, lpr = 0;\n  return {\n    process(L, R, oL, oR, n, p) {\n      const k = 1 - 0.85 * p.tone * 0.95;\n      for (let i = 0; i < n; i++) {\n        ph1 += p.rate / sr; ph2 += p.rate * 2.7 / sr; ph3 += 9.1 / sr;\n        if (ph1 > 1) ph1 -= 1; if (ph2 > 1) ph2 -= 1; if (ph3 > 1) ph3 -= 1;\n        const d = 0.012 * sr + sr * (0.0035 * p.wow * (Math.sin(TWO_PI * ph1) + 0.4 * Math.sin(TWO_PI * ph2)) + 0.0004 * p.flutter * Math.sin(TWO_PI * ph3));\n        bl[w] = L[i]; br[w] = R[i];\n        const r = w - d, ri = Math.floor(r), f = r - ri, a = ri & M, b = (ri + 1) & M;\n        const yl = bl[a] + (bl[b] - bl[a]) * f, yr = br[a] + (br[b] - br[a]) * f;\n        lpl += k * (yl - lpl); lpr += k * (yr - lpr);\n        oL[i] = lpl; oR[i] = lpr;\n        w = (w + 1) & M;\n      }\n    },\n  };\n}"
+}

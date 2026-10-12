@@ -1,0 +1,267 @@
+{
+  "skyplugin": 1,
+  "version": "1.0",
+  "author": "Sky Studio",
+  "id": "skystudio.retrowave",
+  "kind": "patches",
+  "name": "Retrowave Pack",
+  "desc": "Eight 80s-style Sky Synth sounds: neon leads, gated pads, analog bass.",
+  "patches": [
+    {
+      "id": "neonlead",
+      "name": "Neon Lead",
+      "cat": "Lead",
+      "desc": "Bright detuned saws with slow vibrato",
+      "patch": {
+        "osc1": {
+          "wave": "sawtooth"
+        },
+        "osc2": {
+          "on": true,
+          "wave": "sawtooth",
+          "detune": 11
+        },
+        "filter": {
+          "cutoff": 4200,
+          "res": 1.6,
+          "keytrack": 0.5
+        },
+        "aenv": {
+          "a": 0.01,
+          "d": 0.3,
+          "s": 0.8,
+          "r": 0.3
+        },
+        "lfo": {
+          "target": "pitch",
+          "rate": 5.4,
+          "depth": 0.05,
+          "delay": 0.4
+        }
+      }
+    },
+    {
+      "id": "nightdrive",
+      "name": "Night Drive",
+      "cat": "Pad",
+      "desc": "Wide warm pad for slow chords",
+      "patch": {
+        "osc1": {
+          "wave": "sawtooth"
+        },
+        "osc2": {
+          "on": true,
+          "wave": "sawtooth",
+          "detune": 13
+        },
+        "unison": {
+          "voices": 3,
+          "spread": 36
+        },
+        "filter": {
+          "cutoff": 1500,
+          "res": 0.9,
+          "keytrack": 0.4
+        },
+        "aenv": {
+          "a": 0.7,
+          "d": 0.6,
+          "s": 0.9,
+          "r": 1.4
+        },
+        "level": 0.5
+      }
+    },
+    {
+      "id": "gridbass",
+      "name": "Grid Bass",
+      "cat": "Bass",
+      "desc": "Tight analog-style synth bass",
+      "patch": {
+        "osc1": {
+          "wave": "sawtooth",
+          "oct": -1
+        },
+        "sub": {
+          "on": true,
+          "level": 0.55
+        },
+        "filter": {
+          "cutoff": 600,
+          "res": 2.5,
+          "env": 3,
+          "keytrack": 0.3
+        },
+        "fenv": {
+          "a": 0.002,
+          "d": 0.25,
+          "s": 0.15,
+          "r": 0.2
+        },
+        "aenv": {
+          "a": 0.003,
+          "d": 0.3,
+          "s": 0.8,
+          "r": 0.12
+        }
+      }
+    },
+    {
+      "id": "chromestab",
+      "name": "Chrome Stab",
+      "cat": "Keys",
+      "desc": "Short punchy chord stab",
+      "patch": {
+        "osc1": {
+          "wave": "sawtooth"
+        },
+        "osc2": {
+          "on": true,
+          "wave": "square",
+          "detune": 7,
+          "level": 0.6
+        },
+        "filter": {
+          "cutoff": 2200,
+          "res": 1.4,
+          "env": 2.5
+        },
+        "fenv": {
+          "a": 0.002,
+          "d": 0.18,
+          "s": 0.2,
+          "r": 0.15
+        },
+        "aenv": {
+          "a": 0.003,
+          "d": 0.2,
+          "s": 0.35,
+          "r": 0.15
+        }
+      }
+    },
+    {
+      "id": "laserwhistle",
+      "name": "Laser Whistle",
+      "cat": "Lead",
+      "desc": "Pure sine lead with a deep vibrato",
+      "patch": {
+        "osc1": {
+          "wave": "sine"
+        },
+        "osc2": {
+          "on": true,
+          "wave": "triangle",
+          "oct": 1,
+          "level": 0.2
+        },
+        "filter": {
+          "cutoff": 7000
+        },
+        "aenv": {
+          "a": 0.03,
+          "d": 0.2,
+          "s": 0.9,
+          "r": 0.4
+        },
+        "lfo": {
+          "target": "pitch",
+          "rate": 6.2,
+          "depth": 0.1,
+          "delay": 0.25
+        }
+      }
+    },
+    {
+      "id": "sunsetpluck",
+      "name": "Sunset Pluck",
+      "cat": "Pluck",
+      "desc": "Plinky arpeggio pluck",
+      "patch": {
+        "osc1": {
+          "wave": "square"
+        },
+        "osc2": {
+          "on": true,
+          "wave": "sawtooth",
+          "detune": 6,
+          "level": 0.5
+        },
+        "filter": {
+          "cutoff": 1600,
+          "res": 2,
+          "env": 3.2
+        },
+        "fenv": {
+          "a": 0.001,
+          "d": 0.14,
+          "s": 0.0,
+          "r": 0.1
+        },
+        "aenv": {
+          "a": 0.001,
+          "d": 0.22,
+          "s": 0.0,
+          "r": 0.12
+        }
+      }
+    },
+    {
+      "id": "gatedpad",
+      "name": "Gated Pad",
+      "cat": "Pad",
+      "desc": "Pad that pulses with a volume LFO",
+      "patch": {
+        "osc1": {
+          "wave": "sawtooth"
+        },
+        "osc2": {
+          "on": true,
+          "wave": "sawtooth",
+          "detune": 9
+        },
+        "filter": {
+          "cutoff": 2400
+        },
+        "aenv": {
+          "a": 0.2,
+          "d": 0.4,
+          "s": 0.9,
+          "r": 0.6
+        },
+        "lfo": {
+          "target": "amp",
+          "wave": "square",
+          "rate": 4,
+          "depth": 0.5,
+          "delay": 0
+        },
+        "level": 0.5
+      }
+    },
+    {
+      "id": "arcadebass",
+      "name": "Arcade Bass",
+      "cat": "Bass",
+      "desc": "Square-wave video-game bass",
+      "patch": {
+        "osc1": {
+          "wave": "square",
+          "oct": -1,
+          "pw": 0.4
+        },
+        "filter": {
+          "cutoff": 1100,
+          "res": 1.2,
+          "keytrack": 0.2
+        },
+        "aenv": {
+          "a": 0.002,
+          "d": 0.12,
+          "s": 0.7,
+          "r": 0.08
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "skyplugin": 1,
+  "version": "1.0",
+  "author": "Sky Studio",
+  "id": "skystudio.rubberpluck",
+  "kind": "instrument",
+  "name": "Rubber Pluck",
+  "category": "Plugins",
+  "desc": "A bouncy, string-like pluck (Karplus-Strong) with a rubbery low end.",
+  "spec": {
+    "level": 1.0,
+    "lp": 7500,
+    "a": 0.001,
+    "r": 0.25,
+    "drive": 0.15
+  },
+  "render": "function render(midi, sr) {\n  const f = api.mtof(midi), N = Math.max(2, Math.round(sr / f)), len = Math.floor(sr * 2.2), out = new Float32Array(len);\n  const r = api.rng(midi * 7919 + 13), line = new Float32Array(N);\n  for (let i = 0; i < N; i++) line[i] = r() * 2 - 1;\n  const damp = api.clamp(0.9965 + (midi - 40) * 0.00004, 0.994, 0.9992);\n  let idx = 0, prev = 0;\n  for (let i = 0; i < len; i++) {\n    const cur = line[idx];\n    out[i] = cur;\n    const next = 0.5 * (cur + prev) * damp;                      // averaging = the string gradually loses its high harmonics\n    prev = cur; line[idx] = next;\n    idx = (idx + 1) % N;\n  }\n  return out;\n}"
+}

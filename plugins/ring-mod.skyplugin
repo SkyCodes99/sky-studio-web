@@ -1,0 +1,38 @@
+{
+  "skyplugin": 1,
+  "version": "1.0",
+  "author": "Sky Studio",
+  "id": "skystudio.ringmod",
+  "kind": "effect",
+  "name": "Ring Mod",
+  "color": "#ff6fb5",
+  "desc": "Multiplies the sound by a tone for robotic, metallic, bell-like textures.",
+  "params": [
+    {
+      "id": "freq",
+      "label": "Frequency",
+      "min": 20,
+      "max": 4000,
+      "def": 220,
+      "unit": "Hz",
+      "log": true
+    },
+    {
+      "id": "wobble",
+      "label": "Wobble",
+      "min": 0,
+      "max": 1,
+      "def": 0,
+      "unit": "%"
+    },
+    {
+      "id": "mix",
+      "label": "Mix",
+      "min": 0,
+      "max": 1,
+      "def": 0.6,
+      "unit": "%"
+    }
+  ],
+  "dsp": "function create(sr) {\n  let ph = 0, lfo = 0;\n  return {\n    process(L, R, oL, oR, n, p) {\n      const mix = p.mix, dry = 1 - mix, wob = p.wobble;\n      for (let i = 0; i < n; i++) {\n        lfo += 3 / sr; if (lfo > 1) lfo -= 1;\n        const f = p.freq * (1 + wob * 0.5 * Math.sin(TWO_PI * lfo));\n        ph += f / sr; if (ph > 1) ph -= 1;\n        const c = Math.sin(TWO_PI * ph);\n        oL[i] = L[i] * dry + L[i] * c * mix;\n        oR[i] = R[i] * dry + R[i] * c * mix;\n      }\n    },\n  };\n}"
+}

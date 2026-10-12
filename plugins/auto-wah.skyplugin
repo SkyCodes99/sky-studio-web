@@ -1,0 +1,46 @@
+{
+  "skyplugin": 1,
+  "version": "1.0",
+  "author": "Sky Studio",
+  "id": "skystudio.autowah",
+  "kind": "effect",
+  "name": "Auto Wah",
+  "color": "#ffb02e",
+  "desc": "A filter that opens up when the sound gets louder — funky wah on guitars, keys and bass.",
+  "params": [
+    {
+      "id": "base",
+      "label": "Base",
+      "min": 120,
+      "max": 1500,
+      "def": 350,
+      "unit": "Hz",
+      "log": true
+    },
+    {
+      "id": "sens",
+      "label": "Sensitivity",
+      "min": 0,
+      "max": 1,
+      "def": 0.6,
+      "unit": "%"
+    },
+    {
+      "id": "res",
+      "label": "Resonance",
+      "min": 1,
+      "max": 10,
+      "def": 4,
+      "unit": ""
+    },
+    {
+      "id": "mix",
+      "label": "Mix",
+      "min": 0,
+      "max": 1,
+      "def": 0.8,
+      "unit": "%"
+    }
+  ],
+  "dsp": "function create(sr) {\n  let lowL = 0, bandL = 0, lowR = 0, bandR = 0, env = 0;\n  const atk = 1 - Math.exp(-1 / (sr * 0.004)), rel = 1 - Math.exp(-1 / (sr * 0.14));\n  return {\n    process(L, R, oL, oR, n, p) {\n      const q = 1 / p.res, mix = p.mix, dry = 1 - mix;\n      for (let i = 0; i < n; i++) {\n        const x = (Math.abs(L[i]) + Math.abs(R[i])) * 0.5 * 4;\n        env += (x > env ? atk : rel) * (x - env);\n        const fc = Math.min(p.base * Math.pow(2, Math.min(env, 1.5) * p.sens * 4), sr * 0.4);\n        const f = 2 * Math.sin(Math.PI * fc / sr);\n        lowL += f * bandL; const hL = L[i] - lowL - q * bandL; bandL += f * hL;\n        lowR += f * bandR; const hR = R[i] - lowR - q * bandR; bandR += f * hR;\n        oL[i] = L[i] * dry + bandL * q * 1.6 * mix;\n        oR[i] = R[i] * dry + bandR * q * 1.6 * mix;\n      }\n    },\n  };\n}"
+}

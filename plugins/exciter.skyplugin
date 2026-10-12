@@ -1,0 +1,38 @@
+{
+  "skyplugin": 1,
+  "version": "1.0",
+  "author": "Sky Studio",
+  "id": "skystudio.exciter",
+  "kind": "effect",
+  "name": "Exciter",
+  "color": "#19c3e6",
+  "desc": "Adds sparkle and air by generating new high harmonics.",
+  "params": [
+    {
+      "id": "freq",
+      "label": "Starts at",
+      "min": 1000,
+      "max": 10000,
+      "def": 3500,
+      "unit": "Hz",
+      "log": true
+    },
+    {
+      "id": "amount",
+      "label": "Amount",
+      "min": 0,
+      "max": 1,
+      "def": 0.45,
+      "unit": "%"
+    },
+    {
+      "id": "mix",
+      "label": "Mix",
+      "min": 0,
+      "max": 1,
+      "def": 1,
+      "unit": "%"
+    }
+  ],
+  "dsp": "function create(sr) {\n  let lpl = 0, lpr = 0, l2l = 0, l2r = 0;\n  return {\n    process(L, R, oL, oR, n, p) {\n      const k = 1 - Math.exp(-TWO_PI * p.freq / sr), drive = 1 + p.amount * 9, gain = p.amount * 0.9 * p.mix;\n      for (let i = 0; i < n; i++) {\n        lpl += k * (L[i] - lpl); lpr += k * (R[i] - lpr);\n        const hl = L[i] - lpl, hr = R[i] - lpr;\n        const sl = Math.tanh(hl * drive), sr2 = Math.tanh(hr * drive);\n        l2l += k * (sl - l2l); l2r += k * (sr2 - l2r);       // keep only the new highs, not the harsh fizz below\n        oL[i] = L[i] + (sl - l2l) * gain;\n        oR[i] = R[i] + (sr2 - l2r) * gain;\n      }\n    },\n  };\n}"
+}

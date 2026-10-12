@@ -1,0 +1,200 @@
+{
+  "skyplugin": 1,
+  "version": "1.0",
+  "author": "Sky Studio",
+  "id": "skystudio.chillkeys",
+  "kind": "patches",
+  "name": "Chill Keys Pack",
+  "desc": "Six soft, mellow Sky Synth sounds for lo-fi and chill songs.",
+  "patches": [
+    {
+      "id": "dreamEP",
+      "name": "Dream Keys",
+      "cat": "Keys",
+      "desc": "Soft electric-piano style keys",
+      "patch": {
+        "osc1": {
+          "wave": "triangle"
+        },
+        "osc2": {
+          "on": true,
+          "wave": "sine",
+          "oct": 1,
+          "level": 0.3
+        },
+        "filter": {
+          "cutoff": 2600,
+          "res": 0.8,
+          "env": 1.5,
+          "vel": 0.7
+        },
+        "fenv": {
+          "a": 0.002,
+          "d": 0.5,
+          "s": 0.2,
+          "r": 0.3
+        },
+        "aenv": {
+          "a": 0.004,
+          "d": 0.7,
+          "s": 0.35,
+          "r": 0.4
+        },
+        "lfo": {
+          "target": "amp",
+          "rate": 4.2,
+          "depth": 0.1,
+          "delay": 0.1
+        }
+      }
+    },
+    {
+      "id": "cloudpad",
+      "name": "Cloud Pad",
+      "cat": "Pad",
+      "desc": "Super soft, slow pad",
+      "patch": {
+        "osc1": {
+          "wave": "triangle"
+        },
+        "osc2": {
+          "on": true,
+          "wave": "sawtooth",
+          "detune": 8,
+          "level": 0.4
+        },
+        "unison": {
+          "voices": 2,
+          "spread": 24
+        },
+        "filter": {
+          "cutoff": 1100
+        },
+        "aenv": {
+          "a": 1.1,
+          "d": 0.8,
+          "s": 0.9,
+          "r": 1.8
+        },
+        "level": 0.55
+      }
+    },
+    {
+      "id": "warmsub",
+      "name": "Warm Sub",
+      "cat": "Bass",
+      "desc": "Round sine bass",
+      "patch": {
+        "osc1": {
+          "wave": "sine",
+          "oct": -1
+        },
+        "osc2": {
+          "on": true,
+          "wave": "triangle",
+          "oct": -1,
+          "level": 0.25
+        },
+        "filter": {
+          "cutoff": 700
+        },
+        "aenv": {
+          "a": 0.01,
+          "d": 0.4,
+          "s": 0.8,
+          "r": 0.2
+        }
+      }
+    },
+    {
+      "id": "musicboxlead",
+      "name": "Music Box Lead",
+      "cat": "Lead",
+      "desc": "Tinkly little melody sound",
+      "patch": {
+        "osc1": {
+          "wave": "sine"
+        },
+        "osc2": {
+          "on": true,
+          "wave": "sine",
+          "oct": 2,
+          "level": 0.35
+        },
+        "filter": {
+          "cutoff": 8000
+        },
+        "aenv": {
+          "a": 0.001,
+          "d": 0.6,
+          "s": 0.0,
+          "r": 0.5
+        }
+      }
+    },
+    {
+      "id": "mellowpluck",
+      "name": "Mellow Pluck",
+      "cat": "Pluck",
+      "desc": "Gentle muted pluck",
+      "patch": {
+        "osc1": {
+          "wave": "triangle"
+        },
+        "filter": {
+          "cutoff": 1400,
+          "env": 2,
+          "res": 1
+        },
+        "fenv": {
+          "a": 0.001,
+          "d": 0.2,
+          "s": 0.0,
+          "r": 0.15
+        },
+        "aenv": {
+          "a": 0.001,
+          "d": 0.35,
+          "s": 0.0,
+          "r": 0.2
+        }
+      }
+    },
+    {
+      "id": "tapestrings",
+      "name": "Tape Strings",
+      "cat": "Pad",
+      "desc": "Wobbly vintage string section",
+      "patch": {
+        "osc1": {
+          "wave": "sawtooth"
+        },
+        "osc2": {
+          "on": true,
+          "wave": "sawtooth",
+          "detune": 14
+        },
+        "unison": {
+          "voices": 3,
+          "spread": 30
+        },
+        "filter": {
+          "cutoff": 1900
+        },
+        "aenv": {
+          "a": 0.5,
+          "d": 0.5,
+          "s": 0.9,
+          "r": 0.9
+        },
+        "lfo": {
+          "target": "pitch",
+          "rate": 0.7,
+          "depth": 0.12,
+          "delay": 0
+        },
+        "level": 0.5
+      }
+    }
+  ]
+}

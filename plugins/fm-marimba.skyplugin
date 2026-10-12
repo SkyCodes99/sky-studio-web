@@ -1,0 +1,17 @@
+{
+  "skyplugin": 1,
+  "version": "1.0",
+  "author": "Sky Studio",
+  "id": "skystudio.fmmarimba",
+  "kind": "instrument",
+  "name": "FM Marimba",
+  "category": "Plugins",
+  "desc": "A woody, hollow mallet sound made with frequency modulation.",
+  "spec": {
+    "level": 0.95,
+    "lp": 9000,
+    "a": 0.001,
+    "r": 0.18
+  },
+  "render": "function render(midi, sr) {\n  const f = api.mtof(midi), len = Math.floor(sr * 1.8), out = new Float32Array(len);\n  const decay = api.clamp(1.2 - (midi - 60) / 60, 0.25, 1.6);\n  for (let i = 0; i < len; i++) {\n    const t = i / sr;\n    const mod = Math.sin(api.TWO_PI * f * 3.99 * t) * (2.2 * Math.exp(-t * 14) + 0.15);\n    out[i] = Math.sin(api.TWO_PI * f * t + mod) * Math.exp(-t / decay * 3.2);\n  }\n  const att = Math.floor(sr * 0.0015);\n  for (let i = 0; i < att; i++) out[i] *= i / att;\n  return out;\n}"
+}

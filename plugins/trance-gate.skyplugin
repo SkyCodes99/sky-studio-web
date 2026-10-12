@@ -1,0 +1,66 @@
+{
+  "skyplugin": 1,
+  "version": "1.0",
+  "author": "Sky Studio",
+  "id": "skystudio.trancegate",
+  "kind": "effect",
+  "name": "Trance Gate",
+  "color": "#8f7bff",
+  "desc": "Chops pads and chords into rhythmic pulses with a step pattern.",
+  "params": [
+    {
+      "id": "pattern",
+      "label": "Pattern",
+      "type": "select",
+      "def": 1,
+      "options": [
+        [
+          "Straight",
+          0
+        ],
+        [
+          "Gallop",
+          1
+        ],
+        [
+          "Off-beat",
+          2
+        ],
+        [
+          "Stutter",
+          3
+        ],
+        [
+          "Syncopated",
+          4
+        ]
+      ]
+    },
+    {
+      "id": "speed",
+      "label": "Steps / sec",
+      "min": 2,
+      "max": 24,
+      "def": 8,
+      "unit": "",
+      "log": true
+    },
+    {
+      "id": "depth",
+      "label": "Depth",
+      "min": 0,
+      "max": 1,
+      "def": 1,
+      "unit": "%"
+    },
+    {
+      "id": "smooth",
+      "label": "Smooth",
+      "min": 0,
+      "max": 1,
+      "def": 0.35,
+      "unit": "%"
+    }
+  ],
+  "dsp": "function create(sr) {\n  const PATS = [\n    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],\n    [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1],\n    [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0],\n    [1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0],\n    [1, 0, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1],\n  ];\n  let pos = 0, g = 1;\n  return {\n    process(L, R, oL, oR, n, p) {\n      const pat = PATS[Math.max(0, Math.min(PATS.length - 1, Math.round(p.pattern)))];\n      const inc = p.speed / sr, slew = 1 - Math.exp(-1 / (sr * (0.0008 + p.smooth * 0.02)));\n      for (let i = 0; i < n; i++) {\n        pos += inc; if (pos >= 16) pos -= 16;\n        const open = pat[pos | 0];\n        const target = open ? 1 : 1 - p.depth;\n        g += slew * (target - g);\n        oL[i] = L[i] * g; oR[i] = R[i] * g;\n      }\n    },\n  };\n}"
+}
