@@ -54,6 +54,18 @@ class OneShot {
   kill(t) { try { this.g.gain.setTargetAtTime(0, t, 0.005); this.src.stop(t + 0.06); } catch { /* */ } this.released = true; }
 }
 
+const reverseCache = new WeakMap();
+/** A reversed copy of a drum hit (cached), for reverse cymbals and swells. */
+function reversedBuffer(buf) {
+  let r = reverseCache.get(buf);
+  if (!r) {
+    r = new AudioBuffer({ length: buf.length, sampleRate: buf.sampleRate, numberOfChannels: buf.numberOfChannels });
+    for (let c = 0; c < buf.numberOfChannels; c++) { const d = buf.getChannelData(c).slice().reverse(); r.copyToChannel(d, c); }
+    reverseCache.set(buf, r);
+  }
+  return r;
+}
+
 export class Engine extends Emitter {
   /** Load the effect processors into an audio context (call once before building effects). */
   static loadFx(ctx) { return loadFxModule(ctx); }
@@ -337,13 +349,21 @@ export class Engine extends Emitter {
       const info = this.padBuffer(track, pad);
       if (!info) return null;
       const pm = (track.padMix && track.padMix[pad]) || {};
-      const src = ctx.createBufferSource(); src.buffer = info.buf;
+      const src = ctx.createBufferSource(); src.buffer = pm.reverse && !info.slice ? reversedBuffer(info.buf) : info.buf;
       src.playbackRate.value = Math.pow(2, ((prm.tone ?? 0.5) - 0.5) * 0.5 + (pm.tune || 0) / 12);
       const g = ctx.createGain();
       const v = vel / 127;
       g.gain.value = Math.pow(v, 1.4) * 1.15 * (pm.gain ?? 1);
-      src.connect(g); g.connect(strip.input);
+      // optional per-hit shaping from the Sound Lab (each adds one node, and only when used): filter, pan
+      let tailNode = g;
+      if (pm.filter) { const f = ctx.createBiquadFilter(); f.type = pm.filter < 0 ? 'lowpass' : 'highpass'; f.frequency.value = pm.filter < 0 ? clamp(20000 * Math.pow(0.012, -pm.filter), 80, 20000) : clamp(20 * Math.pow(250, pm.filter), 20, 9000); f.Q.value = 0.8; tailNode.connect(f); tailNode = f; }
+      if (pm.pan) { const pn = ctx.createStereoPanner(); pn.pan.value = clamp(pm.pan, -1, 1); tailNode.connect(pn); tailNode = pn; }
+      src.connect(g); tailNode.connect(strip.input);
       if (info.slice) { src.start(t, info.off, info.dur); } else src.start(t);
+      if (pm.decay != null && pm.decay < 0.999) {                       // shorten this hit (Sound Lab "Length")
+        const cut = Math.max(0.02, info.dur * (0.04 + 0.96 * clamp(pm.decay, 0, 1)) / src.playbackRate.value);
+        g.gain.setValueAtTime(g.gain.value, t + cut * 0.5); g.gain.setTargetAtTime(0, t + cut * 0.5, cut * 0.1); src.stop(t + cut * 1.2);
+      }
       if (prm.release < 0.999) {
         const cut = info.dur * (0.12 + 0.88 * clamp(prm.release / 0.5, 0, 1)) / src.playbackRate.value;
         if (prm.release < 0.5) { g.gain.setValueAtTime(g.gain.value, t + cut * 0.6); g.gain.setTargetAtTime(0, t + cut * 0.6, cut * 0.12); src.stop(t + cut * 1.4); }

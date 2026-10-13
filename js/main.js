@@ -50,7 +50,7 @@ async function boot() {
   requestAnimationFrame(frame);
 
   // ---- keyboard
-  const playMode = () => app.view.bottomOpen && app.view.bottom === 'keys';
+  const playMode = () => app.view.bottomOpen && (app.view.bottom === 'keys' || app.view.bottom === 'lab');
   window.addEventListener('keydown', (e) => {
     const t = e.target, tag = (t.tagName || '').toLowerCase();
     if (tag === 'input' || tag === 'textarea' || tag === 'select' || t.isContentEditable) {
@@ -93,7 +93,7 @@ async function boot() {
       else if (kl === 's') app.splitAt();
       else if (kl === 'i') { app.view.left = !app.view.left; app.emit('layout'); }
       else if (kl === 'l') { app.view.right = !app.view.right; app.emit('layout'); }
-      else if (k >= '1' && k <= '6') { app.view.bottom = ['editor', 'mixer', 'fx', 'auto', 'synth', 'keys'][+k - 1]; app.view.bottomOpen = true; app.emit('layout'); }
+      else if (k >= '1' && k <= '7') { app.view.bottom = ['editor', 'mixer', 'fx', 'auto', 'synth', 'keys', 'lab'][+k - 1]; app.view.bottomOpen = true; app.emit('layout'); }
       else handled = false;
     } else handled = false;
     if (handled) e.preventDefault();

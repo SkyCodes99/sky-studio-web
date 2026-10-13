@@ -189,6 +189,18 @@ export function mountLeft(app, root) {
     const row = (kind, id, name, desc, ic, active) => h('div', { class: 'list-item' + (active ? ' sel' : ''), onClick: () => choose(kind, id), onDblclick: () => add(kind, id) },
       h('div', { class: 'dot-ico' }, icon(ic, 16)), h('div', { class: 'li-main' }, h('div', { class: 'li-n' }, name), h('div', { class: 's li-s' }, desc)),
       iconBtn('plus', 'Add a new track with this sound', (e) => { e.stopPropagation(); add(kind, id); }, 'sm', 15));
+    const mine = app.mySounds().filter((m) => m.kind === soundMode && (!q || m.name.toLowerCase().includes(q)));
+    if (mine.length) {
+      body.append(h('div', { class: 'cat-head' }, 'My sounds'));
+      for (const m of mine) {
+        const baseDef = soundMode === 'inst' ? INST_BY_ID[m.base] : KIT_BY_ID[m.base];
+        body.append(h('div', { class: 'list-item', title: 'Click to use • double-click adds a new track',
+          onClick: () => { const cur = app.selTrack; if (cur && !app.applyMySound(cur.id, m)) addMine(m); else if (!cur) addMine(m); }, onDblclick: () => addMine(m) },
+          h('div', { class: 'dot-ico' }, icon(soundMode === 'inst' ? 'star' : 'drum', 16)), h('div', { class: 'li-main' }, h('div', { class: 'li-n' }, m.name), h('div', { class: 's li-s' }, 'Based on ' + (baseDef ? baseDef.name : m.base))),
+          iconBtn('trash', 'Delete this saved sound', (e) => { e.stopPropagation(); app.deleteMySound(m.id); }, 'sm', 15), iconBtn('plus', 'Add a new track with this sound', (e) => { e.stopPropagation(); addMine(m); }, 'sm', 15)));
+      }
+    }
+    function addMine(m) { const nt = m.kind === 'drum' ? app.addTrack('drum', { kit: m.base }) : app.addTrack('inst', { inst: m.base }); app.applyMySound(nt.id, m); }
     if (soundMode === 'inst') {
       for (const cat of INST_CATS) {
         const list = INSTRUMENTS.filter((x) => x.cat === cat && match(x));

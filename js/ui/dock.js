@@ -10,6 +10,7 @@ import { createKeys } from './keys.js';
 import { createFxRack } from './fxrack.js';
 import { createAutoEditor } from './autoedit.js';
 import { createSynthEd } from './synthed.js';
+import { createSoundLab } from './soundlab.js';
 
 export function mountDock(app, root) {
   root.replaceChildren();
@@ -18,7 +19,7 @@ export function mountDock(app, root) {
   const body = h('div', { class: 'dock-body' });
   root.append(split, tabs, body);
 
-  const roll = createPianoRoll(app), steps = createStepSeq(app), audio = createAudioEditor(app), mixer = createMixer(app), keys = createKeys(app), fxrack = createFxRack(app), autoed = createAutoEditor(app), synthed = createSynthEd(app);
+  const roll = createPianoRoll(app), steps = createStepSeq(app), audio = createAudioEditor(app), mixer = createMixer(app), keys = createKeys(app), fxrack = createFxRack(app), autoed = createAutoEditor(app), lab = createSoundLab(app), synthed = createSynthEd(app);
   const empty = h('div', { class: 'empty', style: { margin: 'auto' } });
   const edPane = h('div', { style: { display: 'flex', flex: 1, minHeight: 0 } }, empty, roll.el, steps.el, audio.el);
   const mixPane = h('div', { style: { display: 'flex', flex: 1, minHeight: 0 } }, mixer.el);
@@ -26,7 +27,8 @@ export function mountDock(app, root) {
   const fxPane = h('div', { style: { display: 'flex', flex: 1, minHeight: 0 } }, fxrack.el);
   const autoPane = h('div', { style: { display: 'flex', flex: 1, minHeight: 0 } }, autoed.el);
   const synthPane = h('div', { style: { display: 'flex', flex: 1, minHeight: 0 } }, synthed.el);
-  body.append(edPane, mixPane, keyPane, fxPane, autoPane, synthPane);
+  const labPane = h('div', { style: { display: 'flex', flex: 1, minHeight: 0 } }, lab.el);
+  body.append(edPane, mixPane, keyPane, fxPane, autoPane, synthPane, labPane);
 
   let shown = null;    // 'empty' | 'roll' | 'steps' | 'audio'
   function showEditor() {
@@ -52,7 +54,7 @@ export function mountDock(app, root) {
     document.getElementById('app').classList.toggle('no-bottom', !v.bottomOpen);
     document.getElementById('app').style.setProperty('--bottom-h', v.bottomH + 'px');
     const mk = (id, label, ic) => h('button', { class: 'tab' + (v.bottomOpen && v.bottom === id ? ' on' : ''), onClick: () => { v.bottom = id; v.bottomOpen = true; app.emit('layout'); } }, icon(ic, 15), label);
-    tabs.replaceChildren(mk('editor', 'Editor', 'note'), mk('mixer', 'Mixer', 'mixer'), mk('fx', 'Effects', 'magic'), mk('auto', 'Automation', 'arpeggio'), mk('synth', 'Synth', 'wave'), mk('keys', 'Play', 'piano'),
+    tabs.replaceChildren(mk('editor', 'Editor', 'note'), mk('mixer', 'Mixer', 'mixer'), mk('fx', 'Effects', 'magic'), mk('auto', 'Automation', 'arpeggio'), mk('synth', 'Synth', 'wave'), mk('lab', 'Sound Lab', 'star'), mk('keys', 'Play', 'piano'),
       h('div', { style: { flex: 1 } }),
       h('span', { class: 'hint', style: { marginRight: '10px' } }, v.bottom === 'keys' && v.bottomOpen ? 'Keys A–; play notes · Z/X octave' : ''),
       iconBtn(v.bottomOpen ? 'chevron' : 'up', v.bottomOpen ? 'Collapse' : 'Expand', () => { v.bottomOpen = !v.bottomOpen; app.emit('layout'); }, '', 18));
@@ -62,10 +64,12 @@ export function mountDock(app, root) {
     fxPane.style.display = v.bottom === 'fx' ? 'flex' : 'none';
     autoPane.style.display = v.bottom === 'auto' ? 'flex' : 'none';
     synthPane.style.display = v.bottom === 'synth' ? 'flex' : 'none';
+    labPane.style.display = v.bottom === 'lab' ? 'flex' : 'none';
+    if (v.bottom === 'lab' && v.bottomOpen) lab.refresh();
     if (v.bottom === 'synth' && v.bottomOpen) synthed.refresh();
     if (v.bottom === 'auto' && v.bottomOpen) requestAnimationFrame(() => autoed.refresh());
     if (v.bottomOpen && v.bottom === 'editor') { showEditor(); requestAnimationFrame(() => { roll.resize(); steps.resize(); audio.resize(); }); }
-    if (v.bottom !== 'keys') keys.releaseAll();
+    if (v.bottom !== 'keys' && v.bottom !== 'lab') keys.releaseAll();
   }
 
   split.addEventListener('pointerdown', (e) => {
@@ -76,6 +80,7 @@ export function mountDock(app, root) {
     window.addEventListener('pointermove', mv); window.addEventListener('pointerup', up);
   });
 
+  app.on('labpad', (pad) => { lab.setPad(pad); app.view.bottom = 'lab'; app.view.bottomOpen = true; app.emit('layout'); });
   app.on('layout', render);
   app.on('selection', () => { if (app.view.bottom === 'editor' && app.view.bottomOpen) showEditor(); });
   app.on('change', (k) => {
@@ -84,7 +89,7 @@ export function mountDock(app, root) {
   });
   render();
   return {
-    keys,
+    keys, lab,
     frame() {
       if (!app.view.bottomOpen) return;
       if (app.view.bottom === 'editor') { roll.frame(); steps.frame(); audio.frame(); }

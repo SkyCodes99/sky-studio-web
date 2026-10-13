@@ -555,6 +555,102 @@ export class App extends Emitter {
     this.emit('change', 'load'); this.emit('selection'); this.emit('transport'); this.updateTitle();
   }
 
+  // ------------------------------------------------------------ My Sounds (saved instrument / kit setups) + single tones
+  mySounds() { return this.settings.mySounds || []; }
+  /** Keep the current sound of a track (instrument or kit + every knob) under a name. */
+  saveMySound(trackId, name) {
+    const t = this.track(trackId);
+    if (!t || t.type === 'audio' || t.inst === 'sampler') { this.toast('Pick an instrument or drum kit track first', 'warn'); return null; }
+    const copy = (x) => (x == null ? x : JSON.parse(JSON.stringify(x)));
+    const snd = {
+      id: 'ms_' + uid(), name: name || t.name, kind: t.type === 'drum' ? 'drum' : 'inst', base: t.type === 'drum' ? t.kit : t.inst,
+      params: copy(t.params), transpose: t.transpose || 0, vol: t.vol, pan: t.pan, send: copy(t.send), eq: copy(t.eq), comp: t.comp || 0, drive: t.drive || 0, filter: t.filter || 0,
+      patch: copy(t.patch), padMix: copy(t.padMix), arp: t.type === 'inst' ? copy(t.arp) : undefined, fx: copy(t.fx || []),
+    };
+    this.settings.mySounds = [snd, ...this.mySounds()].slice(0, 400);
+    this.saveSettings(); this.emit('change', 'mysounds');
+    return snd;
+  }
+  deleteMySound(id) { this.settings.mySounds = this.mySounds().filter((x) => x.id !== id); this.saveSettings(); this.emit('change', 'mysounds'); }
+  /** Put a saved sound on a track (the track must be the same kind: instrument or drums). */
+  applyMySound(trackId, snd) {
+    const t = this.track(trackId);
+    if (!t || (snd.kind === 'drum') !== (t.type === 'drum') || t.type === 'audio') return false;
+    const copy = (x) => (x == null ? x : JSON.parse(JSON.stringify(x)));
+    const keep = t.name, wasDefault = !t.name || (t.type === 'drum' ? KIT_BY_ID[t.kit] && t.name === KIT_BY_ID[t.kit].name : INST_BY_ID[t.inst] && t.name === INST_BY_ID[t.inst].name);
+    if (snd.kind === 'drum') { t.kit = snd.base; ensureKit(snd.base, this.ctx.sampleRate).then(() => this.emit('change', 'kits')); t.padMix = copy(snd.padMix) || {}; }
+    else {
+      t.inst = snd.base; delete t.sample;
+      if (snd.patch) t.patch = copy(snd.patch); else delete t.patch;
+      t.transpose = snd.transpose || 0; if (snd.arp) t.arp = copy(snd.arp);
+      prewarm(snd.base, this.ctx.sampleRate);
+    }
+    t.params = copy(snd.params) || {};
+    Object.assign(t, { vol: snd.vol ?? t.vol, pan: snd.pan ?? 0, send: copy(snd.send) || t.send, eq: copy(snd.eq) || t.eq, comp: snd.comp || 0, drive: snd.drive || 0, filter: snd.filter || 0 });
+    t.fx = copy(snd.fx || []).map((e) => ({ ...e, id: uid() }));
+    if (wasDefault) t.name = snd.name; else t.name = keep;
+    this.commit('structure');
+    return true;
+  }
+  /** Render one note / hit of a track (with all its settings and effects) to an AudioBuffer: the "single tone" of that sound. */
+  async bakeSound(trackId, { midi = 60, secs = 1.5 } = {}) {
+    const t = this.track(trackId);
+    if (!t || t.type === 'audio') return null;
+    const P = newProject(); P.bpm = 120; P.fx = { ...this.project.fx }; P.assets = this.project.assets;
+    const tr = JSON.parse(JSON.stringify(t));
+    tr.mute = false; tr.solo = false; tr.vol = Math.max(tr.vol, 0.78);
+    const beats = Math.max(0.5, secs * 2), r = newRegion(0, Math.ceil(beats + 1), { loopLen: Math.ceil(beats + 1) });
+    r.notes.push({ id: uid(), s: 0, d: beats, p: t.type === 'drum' ? PAD_BASE + clamp(midi - PAD_BASE, 0, 15) : midi, v: 110 });
+    tr.regions = [r]; tr.arp = { ...(tr.arp || {}), on: false }; tr.id = 'bake'; P.tracks = [tr];
+    const ab = await renderProject(P, { sr: this.ctx.sampleRate, normalize: false, tail: 1.4, endBeat: beats });
+    // trim the silence after the sound and fade the very end
+    const ch = [ab.getChannelData(0), ab.getChannelData(1)];
+    let last = 0; for (let i = ab.length - 1; i > 0; i--) if (Math.abs(ch[0][i]) > 0.0008 || Math.abs(ch[1][i]) > 0.0008) { last = i; break; }
+    const len = Math.min(ab.length, last + Math.floor(ab.sampleRate * 0.03));
+    const out = new AudioBuffer({ length: Math.max(64, len), sampleRate: ab.sampleRate, numberOfChannels: 2 });
+    let pk = 0; for (const c of ch) for (let i = 0; i < len; i++) pk = Math.max(pk, Math.abs(c[i]));
+    const g = pk > 1e-4 ? 0.9 / pk : 1, fade = Math.min(len, 480);
+    for (let c = 0; c < 2; c++) { const d = new Float32Array(out.length); for (let i = 0; i < len; i++) { let v = ch[c][i] * g; const r2 = len - 1 - i; if (r2 < fade) v *= r2 / fade; d[i] = v; } out.copyToChannel(d, c); }
+    return out;
+  }
+  /** Bake a single tone into a sample and open it as a sampler track (so it can be pitched, looped and played like any sound). */
+  async bakeToSampler(trackId, opts = {}) {
+    const t = this.track(trackId); if (!t) return null;
+    this.emit('busy', 'Making a sample of this sound…');
+    try {
+      const buf = await this.bakeSound(trackId, opts);
+      if (!buf) return null;
+      const name = `${t.name} ${opts.label || ''}`.trim();
+      const asset = this.makeAsset(name, buf);
+      const nt = this.addTrack('inst', { sampler: { asset: asset.id, root: t.type === 'drum' ? 60 : (opts.midi ?? 60), start: 0 }, name });
+      this.toast(`Made a sampler track from “${t.name}”`);
+      return nt;
+    } finally { this.emit('busy', null); }
+  }
+  async exportSoundWav(trackId, opts = {}) {
+    const t = this.track(trackId); if (!t) return false;
+    const buf = await this.bakeSound(trackId, opts);
+    if (!buf) return false;
+    const path = await host.saveDialog({ title: 'Save this sound as a WAV', filter: 'WAV audio (*.wav)', name: `${t.name} ${opts.label || ''}.wav`.replace(/\s+/g, ' ').trim() });
+    if (!path) return false;
+    const ok = await host.writeBinary(/\.wav$/i.test(path) ? path : path + '.wav', audioBufferToWav(buf, 24));
+    this.toast(ok ? 'Saved the sound' : 'Could not save the sound', ok ? 'info' : 'error');
+    return ok;
+  }
+  /** Drop a single note (or drum hit) onto the selected track at the playhead, inside the region that is there (or a new 1-bar region). */
+  placeNote(midi, len = 1) {
+    const t = this.selTrack;
+    if (!t || t.type === 'audio') { this.toast('Select an instrument or drum track first', 'warn'); return null; }
+    const beat = this.snap(this.pos, true);
+    let r = t.regions.find((x) => x.start <= beat + 1e-6 && beat < x.start + x.len - 1e-6);
+    if (!r) r = this.addRegion(t.id, this.snapToBar(beat), this.bpb * 2, { loopLen: this.bpb * 2 });
+    const rel = clamp(beat - r.start, 0, (r.loopLen || r.len) - 0.25);
+    r.notes.push({ id: uid(), s: rel, d: len, p: midi, v: 100 });
+    this.sel.regions = new Set([r.id]); this.sel.edit = r.id;
+    this.commit('structure'); this.emit('selection');
+    return r;
+  }
+
   // ------------------------------------------------------------ live playing + recording
   recTrack() {
     const t = this.selTrack;

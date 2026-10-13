@@ -1,11 +1,10 @@
 {
-  "version": "1.5.0",
+  "version": "1.6.0",
   "notes": [
-    "NEW 60 instruments beyond the basics: sitar, oud, koto, shamisen, kora, erhu, duduk, shakuhachi, didgeridoo, handpan, gamelan, singing bowl... plus viola, double bass, trombone, tuba, bassoon, piccolo, timpani, taiko, choirs, tape strings, tubular bells, Rhodes and more",
-    "NEW Cinematic sounds: braam, impact, heartbeat, dark drone, reverse cymbal and whooshes",
-    "NEW 10 drum kits: Jazz Brushes, Latin Percussion, Orchestral Percussion, World Hand Drums, Cinematic Drums, Dub Roots, Hard Techno, Ambient Textures, IDM Glitch, Funk & Soul. Percussion kits name their own pads",
-    "NEW 50 more Sky Synth presets: vaporwave, techno, future bass, ambient pads, neuro and garage bass, lo-fi keys and plucks",
-    "NEW 170+ loops in new styles (jazz, bossa, Latin, world, cinematic, orchestral, blues, neo-soul, afrobeat, dub, glitch, ambient) and 12 new song starters",
-    "Smoother playback: string, pad and choir sounds use fewer audio nodes, so busy songs stay in time"
+    "NEW Nearly 10,000 loops: every chord progression (60+) paired with dozens of rhythms, bass lines, arpeggios and melodies, plus hundreds of drum grooves and variations. Search by any word (style, instrument, mood), filter by mood, and star your favourites",
+    "NEW Loop Builder: pick drums, chords, bass, an arpeggio or a melody, choose the progression, rhythm, sound, register, swing and feel, hear it, then add it to your song or keep it under Loops > Mine. 'Surprise me' rolls a fresh idea",
+    "NEW Sound Lab (press 7): play any instrument or drum hit as a single tone, shape it with every knob in one place, save it under My sounds, turn it into a sample, or save it as a WAV",
+    "NEW Per-hit drum shaping: level, tune, length, filter, pan and play-backwards for every pad (right-click a pad name in the beat editor)",
+    "My sounds appear at the top of the Sounds list on any track"
   ]
 }

@@ -7,6 +7,8 @@ import { auditionLoop, auditionSample } from './preview.js';
 import { host } from '../host.js';
 import { NOTE_NAMES } from '../theory.js';
 import { KIT_BY_ID } from '../audio/drums.js';
+import { INST_BY_ID } from '../audio/instruments.js';
+import { showLoopBuilder } from './loopbuilder.js';
 import { trackFromSample } from './dialogs.js';
 import { makeDraggable } from './dragdrop.js';
 
@@ -17,7 +19,7 @@ export function mountLibrary(app, root) {
   const tabs = h('div', { class: 'tabs' });
   const body = h('div', { style: { flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' } });
   root.append(tabs, body);
-  const F = { q: '', cat: 'All', genre: 'All' };
+  const F = { q: '', cat: 'All', genre: 'All', mood: 'All' };
   let playingId = null;
   const playBtns = new Map();
 
@@ -30,14 +32,25 @@ export function mountLibrary(app, root) {
   }
 
   // ------------------------------------------------------------ loops
+  const CAT_ORDER = Object.fromEntries(LOOP_CATS.map((c, i) => [c, i]));
+  const SORTED = LOOPS.map((l, i) => [l, i]).sort((x, y) => (CAT_ORDER[x[0].cat] - CAT_ORDER[y[0].cat]) || (x[1] - y[1])).map((x) => x[0]);   // by category, hand-made loops first
+  const MOODS_LIST = ['Chill', 'Energetic', 'Dark', 'Uplifting', 'Cinematic'];
+  const PAGE = 90;
+  let shown = 0, matches = [], countEl = null;
+  const favs = () => new Set(app.settings.favLoops || []);
+  const mine = () => app.settings.userLoops || [];
+
   function renderLoops() {
-    const search = h('div', { class: 'search' }, icon('search', 15), h('input', { placeholder: `Search ${LOOPS.length} loops…`, value: F.q, onInput: (e) => { F.q = e.target.value; drawList(); }, onKeyDown: (e) => e.stopPropagation() }));
-    const chips = h('div', { class: 'chips' }, ['All', ...LOOP_CATS].map((c) => h('button', { class: 'chip' + (F.cat === c ? ' on' : ''), onClick: () => { F.cat = c; render(); } }, c)));
-    const genre = h('select', { class: 'sel', style: { width: '100%' }, onChange: (e) => { F.genre = e.target.value; drawList(); } }, [h('option', { value: 'All' }, 'All styles'), ...LOOP_GENRES.map((g) => h('option', { value: g, selected: F.genre === g }, g))]);
+    const search = h('div', { class: 'search' }, icon('search', 15), h('input', { placeholder: `Search ${LOOPS.length.toLocaleString()} loops…`, value: F.q, onInput: (e) => { F.q = e.target.value; drawList(); }, onKeyDown: (e) => e.stopPropagation() }));
+    const chips = h('div', { class: 'chips' }, ['All', ...LOOP_CATS, '★ Favorites', 'Mine'].map((c) => h('button', { class: 'chip' + (F.cat === c ? ' on' : ''), onClick: () => { F.cat = c; render(); } }, c)));
+    const genre = h('select', { class: 'sel', style: { flex: 1, minWidth: 0 }, onChange: (e) => { F.genre = e.target.value; drawList(); } }, [h('option', { value: 'All' }, 'All styles'), ...LOOP_GENRES.map((g) => h('option', { value: g, selected: F.genre === g }, g))]);
+    const mood = h('select', { class: 'sel', style: { width: '104px' }, onChange: (e) => { F.mood = e.target.value; drawList(); } }, [h('option', { value: 'All' }, 'Any mood'), ...MOODS_LIST.map((m) => h('option', { value: m, selected: F.mood === m }, m))]);
     const P = app.project;
-    const keyInfo = h('div', { class: 'hint', style: { padding: '0 12px 8px', display: 'flex', alignItems: 'center', gap: '6px' } }, icon('magic', 14), `Loops follow your key: ${NOTE_NAMES[P.key]} ${P.scale}`);
-    body.append(h('div', { style: { padding: '12px 12px 6px', display: 'grid', gap: '8px' } }, search, chips, genre), keyInfo);
-    list = h('div', { class: 'panel-body' });
+    const keyInfo = h('div', { class: 'hint', style: { padding: '0 12px 6px', display: 'flex', alignItems: 'center', gap: '6px' } }, icon('magic', 14), `Loops follow your key: ${NOTE_NAMES[P.key]} ${P.scale}`);
+    countEl = h('span', { class: 'hint', style: { marginLeft: 'auto' } }, '');
+    body.append(h('div', { style: { padding: '12px 12px 6px', display: 'grid', gap: '8px' } }, search, chips, h('div', { class: 'row', style: { gap: '6px' } }, genre, mood),
+      h('div', { class: 'row', style: { gap: '8px' } }, button('Build a loop…', () => showLoopBuilder(app), { icon: 'magic', class: 'sm primary', title: 'Make your own drum, chord, bass, arpeggio or melody loop' }), countEl)), keyInfo);
+    list = h('div', { class: 'panel-body', onScroll: () => { if (shown < matches.length && list.scrollTop + list.clientHeight > list.scrollHeight - 500) addMore(); } });
     body.append(list);
     drawList();
   }
@@ -45,18 +58,38 @@ export function mountLibrary(app, root) {
   function drawList() {
     list.replaceChildren(); playBtns.clear();
     const q = F.q.trim().toLowerCase();
-    let n = 0, lastCat = null;
-    const frag = document.createDocumentFragment();
-    for (const l of LOOPS) {
-      if (F.cat !== 'All' && l.cat !== F.cat) continue;
+    const terms = q ? q.split(/\s+/) : [];
+    const fav = favs();
+    const source = F.cat === 'Mine' ? mine() : F.cat === '★ Favorites' ? [...mine(), ...SORTED].filter((l) => fav.has(l.id)) : [...mine(), ...SORTED];
+    matches = [];
+    for (const l of source) {
+      if (LOOP_CATS.includes(F.cat) && l.cat !== F.cat) continue;
       if (F.genre !== 'All' && l.genre !== F.genre && !(l.tags || []).includes(F.genre)) continue;
-      if (q && !(l.name + ' ' + l.genre + ' ' + l.cat + ' ' + (l.tags || []).join(' ')).toLowerCase().includes(q)) continue;
-      if (F.cat === 'All' && l.cat !== lastCat) { frag.append(h('div', { class: 'cat-head' }, l.cat)); lastCat = l.cat; }
-      frag.append(loopRow(l)); n++;
-      if (n > 1400) break;
+      if (F.mood !== 'All' && !(l.mood || []).includes(F.mood)) continue;
+      if (terms.length) {
+        const hay = (l.name + ' ' + l.genre + ' ' + l.cat + ' ' + (l.tags || []).join(' ') + ' ' + (l.inst ? (INST_BY_ID[l.inst] ? INST_BY_ID[l.inst].name : l.inst) : '') + ' ' + (l.kit || '')).toLowerCase();
+        if (!terms.every((t) => hay.includes(t))) continue;
+      }
+      matches.push(l);
     }
-    if (!n) frag.append(h('div', { class: 'empty' }, h('b', {}, 'No loops found'), 'Try a different word or style.'));
+    shown = 0; lastCat = null;
+    if (countEl) countEl.textContent = matches.length.toLocaleString() + ' loop' + (matches.length === 1 ? '' : 's');
+    if (!matches.length) { list.append(h('div', { class: 'empty' }, h('b', {}, F.cat === 'Mine' ? 'No loops of your own yet' : F.cat === '★ Favorites' ? 'No favourites yet' : 'No loops found'),
+      F.cat === 'Mine' ? 'Use “Build a loop…” and press Save.' : F.cat === '★ Favorites' ? 'Click the ☆ on a loop to keep it here.' : 'Try a different word or style.')); return; }
+    addMore();
+  }
+  let lastCat = null;
+  function addMore() {
+    const frag = document.createDocumentFragment();
+    const end = Math.min(matches.length, shown + PAGE);
+    for (; shown < end; shown++) {
+      const l = matches[shown];
+      if (F.cat === 'All' && l.cat !== lastCat) { frag.append(h('div', { class: 'cat-head' }, l.cat)); lastCat = l.cat; }
+      frag.append(loopRow(l));
+    }
     list.append(frag);
+    // the pane may be tall enough to show more than one page: keep going until the list is scrollable
+    if (shown < matches.length && list.scrollHeight <= list.clientHeight + 50) addMore();
   }
   function loopRow(l) {
     const pb = h('button', { class: 'playbtn' + (playingId === l.id ? ' on' : ''), title: 'Preview', onClick: (e) => { e.stopPropagation(); toggle(l); } }, icon(playingId === l.id ? 'stop' : 'play', 12));
@@ -64,11 +97,20 @@ export function mountLibrary(app, root) {
     const row = h('div', { class: 'list-item', title: 'Click to hear • double-click or drag onto the timeline',
       onClick: () => { if (app.settings.autoPreview) toggle(l, true); },
       onDblclick: () => { app.engine.previewStopAll(); app.addLoop(l); } },
-      pb, h('div', { class: 'li-main' }, h('div', { class: 'li-n' }, l.name), h('div', { class: 'li-s' }, `${l.genre} · ${l.bars} bar${l.bars > 1 ? 's' : ''}${l.bpm ? ' · ' + l.bpm + ' bpm' : ''}${l.kit && KIT_BY_ID[l.kit] ? ' · ' + KIT_BY_ID[l.kit].name : ''}`)),
+      pb, h('div', { class: 'li-main' }, h('div', { class: 'li-n' }, l.name), h('div', { class: 'li-s' }, `${l.genre} · ${l.bars} bar${l.bars > 1 ? 's' : ''}${l.bpm ? ' · ' + l.bpm + ' bpm' : ''}${l.kit && KIT_BY_ID[l.kit] ? ' · ' + KIT_BY_ID[l.kit].name : ''}${l.inst && INST_BY_ID[l.inst] ? ' · ' + INST_BY_ID[l.inst].name : ''}`)),
+      h('button', { class: 'star' + (favs().has(l.id) ? ' on' : ''), title: 'Favourite', onClick: (e) => { e.stopPropagation(); toggleFav(l, e.currentTarget); } }, favs().has(l.id) ? '★' : '☆'),
       iconBtn('plus', 'Add to the song', (e) => { e.stopPropagation(); app.engine.previewStopAll(); app.addLoop(l); }, 'sm', 15));
     makeDraggable(app, row, () => ({ type: 'loop', id: l.id }), () => l.name);
     return row;
   }
+  function toggleFav(l, btn) {
+    const set = favs();
+    if (set.has(l.id)) set.delete(l.id); else set.add(l.id);
+    app.settings.favLoops = [...set]; app.saveSettings();
+    btn.classList.toggle('on', set.has(l.id)); btn.textContent = set.has(l.id) ? '★' : '☆';
+    if (F.cat === '★ Favorites') drawList();
+  }
+  app.on('loopsChanged', () => { if (app.view.rightTab === 'loops') drawList(); });
   function toggle(l, forcePlay) {
     if (playingId === l.id && !forcePlay) { app.engine.previewStopAll(); return; }
     playingId = l.id; markPlaying();

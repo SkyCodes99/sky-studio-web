@@ -139,6 +139,8 @@ export function createStepSeq(app) {
     const t = i.track, pm = (t.padMix = t.padMix || {}), cur = (pm[c.row] = pm[c.row] || {});
     const set = (k, v) => { cur[k] = v; if ((cur.gain ?? 1) === 1 && !cur.tune) delete pm[c.row]; app.commit('structure'); };
     showMenu([
+      { label: 'Shape this hit in the Sound Lab…', icon: 'wave', onClick: () => app.emit('labpad', c.row) },
+      { sep: true },
       { label: padName(t.kit, c.row) + ' — level', disabled: true },
       ...[0.5, 0.75, 1, 1.25, 1.6].map((g) => ({ label: Math.round(g * 100) + '%', checked: (cur.gain ?? 1) === g, onClick: () => set('gain', g) })),
       { sep: true }, { label: padName(t.kit, c.row) + ' — tuning', disabled: true },

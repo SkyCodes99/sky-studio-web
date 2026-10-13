@@ -4,6 +4,8 @@ import { PAD } from '../audio/drums.js';
 import { parentScale, degToMidi, chordDegrees, voiceLead } from '../theory.js';
 import { newTrack, newRegion } from '../state.js';
 import { DRUMS2, PROGS2, CHORD2, ARP2, BASS2, MELODIES2, STARTERS2 } from './loops2.js';
+import { generatedLoops, generatedDrums, buildGen, PROGS3 } from './generated.js';
+import { moodsOf } from './catalog.js';
 
 // ---------------------------------------------------------------- drum patterns
 // Each row string spans the whole loop; step size = loop length / string length (so rows may use different grids).
@@ -264,6 +266,13 @@ for (const p of PROGS) {
   for (const s of ARP_STYLES) if (pairs(p, s)) LOOPS.push({ id: `a:${p.id}:${s.id}`, name: `${p.name} · ${s.name}`, cat: 'Arp', genre: s.genre, prog: p.id, style: s.id, bars: p.deg.length, kind: 'inst', inst: s.inst, mode: p.mode, tags: [s.genre, p.genre] });
 }
 for (const m of MELODIES) LOOPS.push({ ...m, tags: [m.genre] });
+// thousands more, described rather than stored (see generated.js): drum variations + genre grooves, and every sensible progression x pattern pairing
+for (const d of generatedDrums(DRUM_DEFS)) LOOPS.push(d);
+for (const l of generatedLoops([...PROGS, ...PROGS3])) LOOPS.push(l);
+for (const l of LOOPS) if (!l.mood) l.mood = moodsOf(l.tags || [l.genre]);
+/** Every chord progression the Loop Builder can use, and the hand-made drum patterns it can start from. */
+export const ALL_PROGS = [...PROGS, ...PROGS3];
+export const DRUM_BASES = DRUM_DEFS.filter((d) => !d.pack);
 
 export const LOOP_BY_ID = Object.fromEntries(LOOPS.map((l) => [l.id, l]));
 export const LOOP_CATS = ['Drums', 'Chords', 'Bass', 'Arp', 'Melody'];
@@ -273,6 +282,7 @@ export const LOOP_GENRES = [...new Set(LOOPS.map((l) => l.genre))].sort();
 export function buildLoop(loop, proj) {
   if (typeof loop === 'string') loop = LOOP_BY_ID[loop];
   if (!loop) return null;
+  if (loop.gen) return buildGen(loop.gen, proj);
   if (loop.kind === 'drum') return buildDrum(loop);
   if (loop.cat === 'Melody') return buildMelody(loop, proj);
   const prog = PROG_BY_ID[loop.prog];

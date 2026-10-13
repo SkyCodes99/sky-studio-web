@@ -38,7 +38,7 @@ export async function auditionKit(app, kitId) {
   app.engine.previewLoop({ type: 'drum', kit: kitId, params: { tone: 0.5, attack: 0.5, release: 1 }, padSamples: {} }, notes, 6, 100, true);
 }
 
-export async function auditionLoop(app, loopId) {
+export async function auditionLoop(app, loopId, opts = {}) {
   const loop = typeof loopId === 'string' ? LOOP_BY_ID[loopId] : loopId;
   if (!loop) return;
   const my = ++token, ep = app.engine.stopEpoch || 0;
@@ -47,13 +47,13 @@ export async function auditionLoop(app, loopId) {
   const bpm = app.project.tracks.length ? app.project.bpm : loop.bpm || app.project.bpm;
   let tl;
   if (loop.kind === 'drum') {
-    const st = app.selTrack && app.selTrack.type === 'drum' ? app.selTrack : app.project.tracks.find((t) => t.type === 'drum');
+    const st = opts.own ? null : (app.selTrack && app.selTrack.type === 'drum' ? app.selTrack : app.project.tracks.find((t) => t.type === 'drum'));
     const kit = loop.kit || (st ? st.kit : '808');
     await ensureKit(kit, app.ctx.sampleRate);
     if (my !== token || (app.engine.stopEpoch || 0) !== ep) return;
     tl = { type: 'drum', kit, params: st ? { ...st.params } : { tone: 0.5, attack: 0.5, release: 1 }, padSamples: st && st.kit === kit ? st.padSamples : {} };
   } else {
-    const st = app.selTrack && loopCompatible(app.selTrack, loop) ? app.selTrack : null;
+    const st = !opts.own && app.selTrack && loopCompatible(app.selTrack, loop) ? app.selTrack : null;
     const instId = st ? st.inst : loop.inst;
     tl = { type: 'inst', inst: instId, params: st ? { ...st.params } : { ...DEFAULT_PARAMS, ...(INST_BY_ID[instId].defaults || {}) }, sample: st && st.sample };
   }
