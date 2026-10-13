@@ -9,7 +9,7 @@ import { auditionInstrument, auditionKit } from './preview.js';
 import { host } from '../host.js';
 import { NOTE_NAMES } from '../theory.js';
 
-export const APP_VERSION = '1.4.0';
+export const APP_VERSION = '1.5.0';
 
 export function promptText(title, value = '', label = '') {
   return new Promise((resolve) => {

@@ -2,11 +2,14 @@
 // Imported for its side effect by the engine, so every part of the app sees the full list.
 import { INSTRUMENTS, INST_BY_ID, INST_CATS } from './instruments.js';
 import { patchVoice, SYNTH_PRESETS, DEFAULT_PATCH } from './synthpatch.js';
+import { SYNTH_PRESETS2 } from './synthpatch2.js';
+import './instruments2.js';
 
 if (!INST_BY_ID.synth) {
   const add = (inst) => { INSTRUMENTS.push(inst); INST_BY_ID[inst.id] = inst; };
   add({ id: 'synth', name: 'Sky Synth (editable)', cat: 'Sky Synth', sub: 'Editable', icon: 'wave', desc: 'Design your own sound — open the Synth tab', editable: true, start: patchVoice((P) => P.patch || DEFAULT_PATCH) });
-  for (const p of SYNTH_PRESETS) {
+  const ORDER = ['Lead', 'Bass', 'Pad', 'Keys', 'Pluck', 'FX'];
+  for (const p of [...SYNTH_PRESETS, ...SYNTH_PRESETS2].sort((a, b) => ORDER.indexOf(a.cat) - ORDER.indexOf(b.cat))) {
     add({ id: p.id, name: p.name, cat: 'Sky Synth', sub: p.cat, icon: p.cat === 'Bass' ? 'bass' : p.cat === 'Pad' ? 'pad' : p.cat === 'Keys' ? 'piano' : 'wave', desc: p.desc,
       role: p.cat === 'Bass' ? 'bass' : undefined, sustain: p.cat === 'Pad' || undefined, patch: p.patch, start: patchVoice(p.patch) });
   }

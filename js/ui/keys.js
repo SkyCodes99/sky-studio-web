@@ -2,7 +2,7 @@
 import { h, clamp } from '../util.js';
 import { icon } from './icons.js';
 import { iconBtn } from './widgets.js';
-import { PAD_NAMES, PAD_BASE } from '../audio/drums.js';
+import { PAD_NAMES, PAD_BASE, padName } from '../audio/drums.js';
 import { diatonicChords, isBlack, noteLabel, noteName, inScale, isRoot, NOTE_NAMES } from '../theory.js';
 import { INST_BY_ID, INSTRUMENTS, INST_CATS } from '../audio/instruments.js';
 import { KIT_BY_ID, KITS } from '../audio/drums.js';
@@ -64,7 +64,7 @@ export function createKeys(app) {
     const grid = h('div', { class: 'pads' });
     for (let row = 3; row >= 0; row--) for (let col = 0; col < 4; col++) {
       const pad = row * 4 + col, midi = PAD_BASE + pad;
-      const el = h('button', { class: 'pad', style: { '--padc': PAD_COLORS[(row * 2 + col) % 8] } }, h('span', { class: 'pn' }, PAD_NAMES[pad]), h('span', { class: 'pk' }, PAD_KEY_LABEL[pad]));
+      const el = h('button', { class: 'pad', style: { '--padc': PAD_COLORS[(row * 2 + col) % 8] } }, h('span', { class: 'pn' }, padName(t.kit, pad)), h('span', { class: 'pk' }, PAD_KEY_LABEL[pad]));
       el.addEventListener('pointerdown', (e) => { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch { /* synthetic pointer */ } app.noteOn(midi, clamp(vel + (e.pressure ? 0 : 0), 20, 127)); });
       const up = () => app.noteOff(midi);
       el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);

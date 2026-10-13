@@ -1,10 +1,11 @@
 {
-  "version": "1.4.0",
+  "version": "1.5.0",
   "notes": [
-    "NEW Plugins: add new effects, instruments and Sky Synth sound packs from small .skyplugin files (File > Plugins). Ten plugins are included: Ring Mod, Auto Wah, Tape Wobble, Exciter, Trance Gate, Glass Harp, FM Marimba, Rubber Pluck and two sound packs",
-    "Songs carry the plugins they use, so they open anywhere (Sky Studio asks before installing them)",
-    "NEW Web version: runs in Chrome or Edge from a web page, saves and opens your songs as files, keeps a recovery copy, and updates itself with a Reload & update card",
-    "Plugin effects run in a sandbox on the audio thread and plugin instruments in a background worker - they can't read your files or use the internet",
-    "Piano roll clicks stay accurate right after the roll scrolls"
+    "NEW 60 instruments beyond the basics: sitar, oud, koto, shamisen, kora, erhu, duduk, shakuhachi, didgeridoo, handpan, gamelan, singing bowl... plus viola, double bass, trombone, tuba, bassoon, piccolo, timpani, taiko, choirs, tape strings, tubular bells, Rhodes and more",
+    "NEW Cinematic sounds: braam, impact, heartbeat, dark drone, reverse cymbal and whooshes",
+    "NEW 10 drum kits: Jazz Brushes, Latin Percussion, Orchestral Percussion, World Hand Drums, Cinematic Drums, Dub Roots, Hard Techno, Ambient Textures, IDM Glitch, Funk & Soul. Percussion kits name their own pads",
+    "NEW 50 more Sky Synth presets: vaporwave, techno, future bass, ambient pads, neuro and garage bass, lo-fi keys and plucks",
+    "NEW 170+ loops in new styles (jazz, bossa, Latin, world, cinematic, orchestral, blues, neo-soul, afrobeat, dub, glitch, ambient) and 12 new song starters",
+    "Smoother playback: string, pad and choir sounds use fewer audio nodes, so busy songs stay in time"
   ]
 }

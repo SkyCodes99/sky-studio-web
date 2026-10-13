@@ -99,13 +99,16 @@ function synth(spec) {
     const sources = [];
     const mix = flt;
     const detuneTargets = [];
+    // every oscillator at the same level (e.g. the three string saws at 0.7): scale the voice once instead of adding a gain node per oscillator
+    const gl = spec.oscs.map((o) => o.gain ?? 1), sameGain = gl.every((g) => Math.abs(g - gl[0]) < 0.001 && Math.abs(g - 1) > 0.26);
+    if (sameGain) amp.gain.cancelScheduledValues(0), amp.gain.setValueAtTime(0, t), amp.gain.linearRampToValueAtTime(peak * gl[0], t + A), S < 1 && amp.gain.setTargetAtTime(peak * gl[0] * S, t + A, D);
     for (const o of spec.oscs) {
       const osc = ctx.createOscillator();
       if (o.pulse) osc.setPeriodicWave(pulseWave(ctx, o.pulse)); else osc.type = o.type || 'sawtooth';
       osc.frequency.value = f * (o.ratio ?? 1);
       osc.detune.value = o.detune || 0;
       const og = o.gain ?? 1;
-      if (Math.abs(og - 1) > 0.26) { const g = ctx.createGain(); g.gain.value = og; osc.connect(g); g.connect(mix); } else osc.connect(mix);
+      if (!sameGain && Math.abs(og - 1) > 0.26) { const g = ctx.createGain(); g.gain.value = og; osc.connect(g); g.connect(mix); } else osc.connect(mix);
       osc.start(t); sources.push(osc); detuneTargets.push(osc.detune);
     }
     if (spec.vib) {
@@ -608,6 +611,8 @@ export const INSTRUMENTS = [
   { id: 'crackle', name: 'Vinyl Crackle', cat: 'FX', icon: 'wave', desc: 'Dusty record crackle — hold a note', start: crackle, sustain: true },
 ];
 export const INST_BY_ID = Object.fromEntries(INSTRUMENTS.map((i) => [i.id, i]));
+// building blocks for the extra instrument libraries (instruments2.js)
+export { noiseBuf, satCurve, pulseWave, tm, fc, velAmp, renderPluck, renderMallet, renderPiano, softCap, synth, fm, formantVoice };
 export const isBassInst = (i) => !!i && (i.cat === 'Bass' || i.role === 'bass');
 export const INST_CATS = ['Keys', 'Plucked', 'Bass', 'Synth', 'Pads', 'Orchestral', 'FX'];
 export const DEFAULT_PARAMS = { tone: 0.5, attack: 0.5, release: 0.5 };

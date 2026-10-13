@@ -48,10 +48,10 @@ export async function auditionLoop(app, loopId) {
   let tl;
   if (loop.kind === 'drum') {
     const st = app.selTrack && app.selTrack.type === 'drum' ? app.selTrack : app.project.tracks.find((t) => t.type === 'drum');
-    const kit = st ? st.kit : '808';
+    const kit = loop.kit || (st ? st.kit : '808');
     await ensureKit(kit, app.ctx.sampleRate);
     if (my !== token || (app.engine.stopEpoch || 0) !== ep) return;
-    tl = { type: 'drum', kit, params: st ? { ...st.params } : { tone: 0.5, attack: 0.5, release: 1 }, padSamples: st ? st.padSamples : {} };
+    tl = { type: 'drum', kit, params: st ? { ...st.params } : { tone: 0.5, attack: 0.5, release: 1 }, padSamples: st && st.kit === kit ? st.padSamples : {} };
   } else {
     const st = app.selTrack && loopCompatible(app.selTrack, loop) ? app.selTrack : null;
     const instId = st ? st.inst : loop.inst;

@@ -4,6 +4,7 @@ import { icon } from './icons.js';
 import { knob, button, showMenu } from './widgets.js';
 import { promptText } from './dialogs.js';
 import { WAVES, FILTER_TYPES, LFO_TARGETS, LFO_WAVES, SYNTH_PRESETS, DEFAULT_PATCH } from '../audio/synthpatch.js';
+import { SYNTH_PRESETS2 } from '../audio/synthpatch2.js';
 import { INST_BY_ID } from '../audio/instruments.js';
 import '../audio/instrument-bank.js';
 import { degToMidi, parentScale } from '../theory.js';
@@ -39,7 +40,7 @@ const CARDS = [
   { title: 'LFO', color: '#19c3e6', rows: [
     { k: 'lfo.target', type: 'sel', label: 'Moves', opts: LFO_TARGETS }, { k: 'lfo.wave', type: 'sel', label: 'Shape', opts: LFO_WAVES },
     { k: 'lfo.rate', label: 'Rate', min: 0.1, max: 25, log: true, fmt: (v) => v.toFixed(1) + ' Hz' }, { k: 'lfo.depth', label: 'Depth', min: 0, max: 1, fmt: pct }, { k: 'lfo.delay', label: 'Fade-in', min: 0, max: 2, fmt: sec }] },
-  { title: 'Output', color: '#ff5f57', rows: [{ k: 'drive', label: 'Drive', min: 0, max: 1, fmt: pct }, { k: 'level', label: 'Volume', min: 0, max: 1, fmt: pct }] },
+  { title: 'Output', color: '#ff5f57', rows: [{ k: 'drive', label: 'Drive', min: 0, max: 1, fmt: pct }, { k: 'level', label: 'Volume', min: 0, max: 3, fmt: pct }] },
 ];
 
 const get = (o, path) => path.split('.').reduce((a, k) => (a == null ? a : a[k]), o);
@@ -65,7 +66,8 @@ export function createSynthEd(app) {
     const r = ev.currentTarget.getBoundingClientRect();
     const items = [];
     let last = null;
-    for (const p of SYNTH_PRESETS) {
+    const ORDER = ['Lead', 'Bass', 'Pad', 'Keys', 'Pluck', 'FX'];
+    for (const p of [...SYNTH_PRESETS, ...SYNTH_PRESETS2].sort((a, b) => ORDER.indexOf(a.cat) - ORDER.indexOf(b.cat))) {
       if (p.cat !== last) { last = p.cat; items.push({ label: '— ' + p.cat + ' —', disabled: true }); }
       items.push({ label: p.name, hint: p.desc.slice(0, 22), onClick: () => { app.loadPatch(t.id, p.patch, p.name); } });
     }

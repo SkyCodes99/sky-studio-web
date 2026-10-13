@@ -5,7 +5,7 @@ import { knob, segmented, button, iconBtn } from './widgets.js';
 import { trackIcon } from './arrange.js';
 import { INSTRUMENTS, INST_BY_ID, INST_CATS } from '../audio/instruments.js';
 import '../audio/instrument-bank.js';
-import { KITS, KIT_BY_ID, PAD_NAMES, PAD_BASE } from '../audio/drums.js';
+import { KITS, KIT_BY_ID, PAD_NAMES, PAD_BASE, padName } from '../audio/drums.js';
 import { TRACK_COLORS } from '../state.js';
 import { auditionInstrument, auditionKit } from './preview.js';
 import { REVERBS } from '../audio/engine.js';
@@ -116,7 +116,8 @@ export function mountLeft(app, root) {
 
     // drum pad samples
     if (t.type === 'drum') {
-      const items = PAD_NAMES.map((n, i) => {
+      const items = PAD_NAMES.map((n0, i) => {
+        const n = padName(t.kit, i);
         const ps = t.padSamples && t.padSamples[i];
         const a = ps && P.assets[typeof ps === 'object' ? ps.asset : ps];
         return h('div', { class: 'pad-item' + (a ? ' custom' : ''), title: a ? 'Using your sample: ' + a.name : 'Click to hear • use ⤒ to swap in your own sample' },
@@ -131,7 +132,7 @@ export function mountLeft(app, root) {
   }
 
   async function loadPadSample(t, i) {
-    const f = await host.openDialog({ title: 'Choose a sample for ' + PAD_NAMES[i], filter: 'Audio files (*.wav *.mp3 *.ogg *.flac *.m4a *.aif *.aiff)' });
+    const f = await host.openDialog({ title: 'Choose a sample for ' + padName(t.kit, i), filter: 'Audio files (*.wav *.mp3 *.ogg *.flac *.m4a *.aif *.aiff)' });
     if (!f.length) return;
     const it = typeof f[0] === 'string' ? { path: f[0], name: f[0].split(/[\\/]/).pop() } : f[0];
     try {

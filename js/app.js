@@ -521,10 +521,10 @@ export class App extends Emitter {
     const b = buildLoop(loop, this.project);
     const type = loop.kind === 'drum' ? 'drum' : 'inst';
     let t = opts.trackId ? this.track(opts.trackId) : null;
-    if (!t) { const st = this.selTrack; if (st && !opts.newTrack && loopCompatible(st, loop)) t = st; }
+    if (!t) { const st = this.selTrack; if (st && !opts.newTrack && loopCompatible(st, loop) && (!loop.kit || st.kit === loop.kit)) t = st; }   // kit-specific loops get their own drum track
     const empty = !this.project.tracks.length;
     if (!t || !loopCompatible(t, loop)) {
-      t = type === 'drum' ? newTrack(this.project, 'drum', { kit: '808', name: loop.genre + ' Drums' }) : newTrack(this.project, 'inst', { inst: loop.inst, name: loop.cat });
+      t = type === 'drum' ? newTrack(this.project, 'drum', { kit: loop.kit || '808', name: loop.genre + ' Drums' }) : newTrack(this.project, 'inst', { inst: loop.inst, name: loop.cat });
       this.project.tracks.push(t); this.engine.strip(t);
       if (type === 'drum') ensureKit(t.kit, this.ctx.sampleRate).then(() => this.emit('change', 'kits'));
       else prewarm(t.inst, this.ctx.sampleRate);

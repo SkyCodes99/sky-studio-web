@@ -6,6 +6,7 @@ import { LOOPS, LOOP_CATS, LOOP_GENRES, LOOP_BY_ID } from '../library/loops.js';
 import { auditionLoop, auditionSample } from './preview.js';
 import { host } from '../host.js';
 import { NOTE_NAMES } from '../theory.js';
+import { KIT_BY_ID } from '../audio/drums.js';
 import { trackFromSample } from './dialogs.js';
 import { makeDraggable } from './dragdrop.js';
 
@@ -52,7 +53,7 @@ export function mountLibrary(app, root) {
       if (q && !(l.name + ' ' + l.genre + ' ' + l.cat + ' ' + (l.tags || []).join(' ')).toLowerCase().includes(q)) continue;
       if (F.cat === 'All' && l.cat !== lastCat) { frag.append(h('div', { class: 'cat-head' }, l.cat)); lastCat = l.cat; }
       frag.append(loopRow(l)); n++;
-      if (n > 400) break;
+      if (n > 1400) break;
     }
     if (!n) frag.append(h('div', { class: 'empty' }, h('b', {}, 'No loops found'), 'Try a different word or style.'));
     list.append(frag);
@@ -63,7 +64,7 @@ export function mountLibrary(app, root) {
     const row = h('div', { class: 'list-item', title: 'Click to hear • double-click or drag onto the timeline',
       onClick: () => { if (app.settings.autoPreview) toggle(l, true); },
       onDblclick: () => { app.engine.previewStopAll(); app.addLoop(l); } },
-      pb, h('div', { class: 'li-main' }, h('div', { class: 'li-n' }, l.name), h('div', { class: 'li-s' }, `${l.genre} · ${l.bars} bar${l.bars > 1 ? 's' : ''}${l.bpm ? ' · ' + l.bpm + ' bpm' : ''}`)),
+      pb, h('div', { class: 'li-main' }, h('div', { class: 'li-n' }, l.name), h('div', { class: 'li-s' }, `${l.genre} · ${l.bars} bar${l.bars > 1 ? 's' : ''}${l.bpm ? ' · ' + l.bpm + ' bpm' : ''}${l.kit && KIT_BY_ID[l.kit] ? ' · ' + KIT_BY_ID[l.kit].name : ''}`)),
       iconBtn('plus', 'Add to the song', (e) => { e.stopPropagation(); app.engine.previewStopAll(); app.addLoop(l); }, 'sm', 15));
     makeDraggable(app, row, () => ({ type: 'loop', id: l.id }), () => l.name);
     return row;

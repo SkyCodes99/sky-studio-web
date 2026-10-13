@@ -2,7 +2,7 @@
 import { h, clamp, uid } from '../util.js';
 import { icon } from './icons.js';
 import { iconBtn, button, dragTracker, showMenu } from './widgets.js';
-import { PAD_NAMES, PAD_BASE } from '../audio/drums.js';
+import { PAD_NAMES, PAD_BASE, padName } from '../audio/drums.js';
 import { LOOPS, buildLoop } from '../library/loops.js';
 
 const LABEL_W = 104, RULER = 22, ROW_H = 26;
@@ -114,7 +114,7 @@ export function createStepSeq(app) {
       g.fillStyle = row % 2 ? '#1d2028' : '#20232c'; g.fillRect(0, y, LABEL_W - 1, ROW_H);
       g.fillStyle = track.color; g.fillRect(0, y + 3, 3, ROW_H - 6);
       g.fillStyle = has ? '#9fd0ff' : '#c3cadb'; g.font = '12px "Segoe UI"'; g.textBaseline = 'middle';
-      g.fillText(PAD_NAMES[row] + (has ? ' ♪' : ''), 12, y + ROW_H / 2);
+      g.fillText(padName(track.kit, row) + (has ? ' ♪' : ''), 12, y + ROW_H / 2);
     }
     g.fillStyle = '#181b22'; g.fillRect(0, 0, LABEL_W, RULER);
     g.fillStyle = '#626a7c'; g.font = '10.5px "Segoe UI"'; g.fillText('Pad', 12, 11);
@@ -139,11 +139,11 @@ export function createStepSeq(app) {
     const t = i.track, pm = (t.padMix = t.padMix || {}), cur = (pm[c.row] = pm[c.row] || {});
     const set = (k, v) => { cur[k] = v; if ((cur.gain ?? 1) === 1 && !cur.tune) delete pm[c.row]; app.commit('structure'); };
     showMenu([
-      { label: PAD_NAMES[c.row] + ' — level', disabled: true },
+      { label: padName(t.kit, c.row) + ' — level', disabled: true },
       ...[0.5, 0.75, 1, 1.25, 1.6].map((g) => ({ label: Math.round(g * 100) + '%', checked: (cur.gain ?? 1) === g, onClick: () => set('gain', g) })),
-      { sep: true }, { label: PAD_NAMES[c.row] + ' — tuning', disabled: true },
+      { sep: true }, { label: padName(t.kit, c.row) + ' — tuning', disabled: true },
       ...[-12, -5, -2, 0, 2, 5, 12].map((st) => ({ label: (st > 0 ? '+' : '') + st + ' semitones', checked: (cur.tune || 0) === st, onClick: () => set('tune', st) })),
-      { sep: true }, { label: PAD_NAMES[c.row] + ' — row tools', disabled: true },
+      { sep: true }, { label: padName(t.kit, c.row) + ' — row tools', disabled: true },
       { label: 'Fill every step', onClick: () => fillRow(c.row, (n) => n % 1 === 0) },
       { label: 'Every 2nd step', onClick: () => fillRow(c.row, (n) => n % 2 === 0) },
       { label: 'Every 4th step (four on the floor)', onClick: () => fillRow(c.row, (n) => n % 4 === 0) },

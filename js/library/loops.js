@@ -3,6 +3,7 @@
 import { PAD } from '../audio/drums.js';
 import { parentScale, degToMidi, chordDegrees, voiceLead } from '../theory.js';
 import { newTrack, newRegion } from '../state.js';
+import { DRUMS2, PROGS2, CHORD2, ARP2, BASS2, MELODIES2, STARTERS2 } from './loops2.js';
 
 // ---------------------------------------------------------------- drum patterns
 // Each row string spans the whole loop; step size = loop length / string length (so rows may use different grids).
@@ -116,6 +117,7 @@ const DRUM_DEFS = [
   D('fills3', 'Snare Roll Fill', 'Fill', 120, 1, { snare: '..x.x.xxxxxxxxxx', kick: 'x...............', crash: '................' }),
   D('fills4', 'Tom Cascade Fill', 'Fill', 110, 1, { tomH: 'xx..............', tomM: '..xx............', tomL: '....xx..........', kick: 'x.......x.......', snare: '......x.x.x.xxxx' }),
 ];
+for (const [id, name, genre, bpm, bars, rows, extra] of DRUMS2) DRUM_DEFS.push(D(id, name, genre, bpm, bars, rows, extra));
 const VELS = { X: 122, x: 100, s: 76, o: 52 };
 
 function buildDrum(def) {
@@ -148,6 +150,7 @@ const PROGS = [
   { id: 'trapmin', name: 'Trap Minor (i VI VII v)', deg: [0, 5, 6, 4], size: 3, mode: 'minor', genre: 'Trap' },
   { id: 'minjazz', name: 'Moody (i iv VII III)', deg: [0, 3, 6, 2], size: 4, mode: 'minor', genre: 'Chill' },
 ];
+PROGS.push(...PROGS2.map((p) => ({ ...p, extra: true })));
 const PROG_BY_ID = Object.fromEntries(PROGS.map((p) => [p.id, p]));
 
 function voicings(prog, proj) {
@@ -202,6 +205,8 @@ const BASS_STYLES = [
   { id: 'walk', name: 'Walking', genre: 'Jazz', inst: 'sub', bar: null },
 ];
 
+CHORD_STYLES.push(...CHORD2); ARP_STYLES.push(...ARP2); BASS_STYLES.push(...BASS2);
+
 function buildChords(prog, style, proj) {
   const vs = voicings(prog, proj), notes = [];
   vs.forEach((v, bar) => { for (const n of style.bar(v)) notes.push({ ...n, s: n.s + bar * 4 }); });
@@ -217,7 +222,7 @@ function buildBass(prog, style, proj) {
       const sc = parentScale(proj.scale);
       const pick = (d) => { let m = degToMidi(d, proj.key, sc, 2); while (m > 47) m -= 12; while (m < 28) m += 12; return m; };
       ns = [pick(root), pick(root + 2), pick(root + 4), pick(next - 1)].map((p, i) => ({ s: i, d: 0.9, p, v: 94 - (i % 2) * 8 }));
-    } else ns = style.bar(r);
+    } else ns = style.bar(r, { next: bassRoot(prog.deg[(bar + 1) % prog.deg.length], proj), minor: prog.mode === 'minor', idx: bar });
     for (const n of ns) notes.push({ ...n, s: n.s + bar * 4 });
   });
   return { len: prog.deg.length * 4, notes };
@@ -242,7 +247,7 @@ const MELODIES = [
   ['marim', 'Marimba Dance', 'Latin', 'marimba', 8, '0:.5:0 .5:.5:2 1:.5:4 1.5:.5:7 2:.5:4 2.5:.5:2 3:.5:0 3.5:.5:2 4:.5:1 4.5:.5:3 5:.5:5 5.5:.5:8 6:.5:5 6.5:.5:3 7:1:1'],
   ['reggae', 'Skank Stabs', 'Reggae', 'organ', 8, '0.5:.4:7 1.5:.4:7 2.5:.4:7 3.5:.4:7 4.5:.4:5 5.5:.4:5 6.5:.4:6 7.5:.4:6'],
   ['jazzy', 'Jazzy Phrase', 'Jazz', 'vibes', 16, '0:.75:4 .75:.75:6 1.5:.5:5 2:1:4 3:1:2 4:.75:3 4.75:.75:5 5.5:.5:4 6:2:2 8:.75:4 8.75:.75:7 9.5:.5:6 10:1:5 11:.5:4 11.5:.5:2 12:3:0'],
-].map(([id, name, genre, inst, len, str]) => ({ id: 'm:' + id, name, cat: 'Melody', genre, inst, bars: len / 4, kind: 'inst', mel: parseMel(str), len }));
+].concat(MELODIES2).map(([id, name, genre, inst, len, str]) => ({ id: 'm:' + id, name, cat: 'Melody', genre, inst, bars: len / 4, kind: 'inst', mel: parseMel(str), len }));
 
 function buildMelody(def, proj) {
   const sc = parentScale(proj.scale);
@@ -252,10 +257,11 @@ function buildMelody(def, proj) {
 // ---------------------------------------------------------------- assemble the library
 export const LOOPS = [];
 for (const d of DRUM_DEFS) LOOPS.push({ ...d, tags: [d.genre] });
+const pairs = (p, s) => (s.progs ? s.progs.includes(p.id) : !p.extra);
 for (const p of PROGS) {
-  for (const s of CHORD_STYLES) LOOPS.push({ id: `c:${p.id}:${s.id}`, name: `${p.name} · ${s.name}`, cat: 'Chords', genre: s.genre, prog: p.id, style: s.id, bars: p.deg.length, kind: 'inst', inst: s.inst, mode: p.mode, tags: [s.genre, p.genre] });
-  for (const s of BASS_STYLES) LOOPS.push({ id: `b:${p.id}:${s.id}`, name: `${p.name} · ${s.name}`, cat: 'Bass', genre: s.genre, prog: p.id, style: s.id, bars: p.deg.length, kind: 'inst', inst: s.inst, mode: p.mode, tags: [s.genre, p.genre] });
-  for (const s of ARP_STYLES) LOOPS.push({ id: `a:${p.id}:${s.id}`, name: `${p.name} · ${s.name}`, cat: 'Arp', genre: s.genre, prog: p.id, style: s.id, bars: p.deg.length, kind: 'inst', inst: s.inst, mode: p.mode, tags: [s.genre, p.genre] });
+  for (const s of CHORD_STYLES) if (pairs(p, s)) LOOPS.push({ id: `c:${p.id}:${s.id}`, name: `${p.name} · ${s.name}`, cat: 'Chords', genre: s.genre, prog: p.id, style: s.id, bars: p.deg.length, kind: 'inst', inst: s.inst, mode: p.mode, tags: [s.genre, p.genre] });
+  for (const s of BASS_STYLES) if (pairs(p, s)) LOOPS.push({ id: `b:${p.id}:${s.id}`, name: `${p.name} · ${s.name}`, cat: 'Bass', genre: s.genre, prog: p.id, style: s.id, bars: p.deg.length, kind: 'inst', inst: s.inst, mode: p.mode, tags: [s.genre, p.genre] });
+  for (const s of ARP_STYLES) if (pairs(p, s)) LOOPS.push({ id: `a:${p.id}:${s.id}`, name: `${p.name} · ${s.name}`, cat: 'Arp', genre: s.genre, prog: p.id, style: s.id, bars: p.deg.length, kind: 'inst', inst: s.inst, mode: p.mode, tags: [s.genre, p.genre] });
 }
 for (const m of MELODIES) LOOPS.push({ ...m, tags: [m.genre] });
 
@@ -353,6 +359,8 @@ export const STARTERS = [
     { type: 'inst', inst: 'piano', name: 'Keys' },
   ], { bars: 8, empty: true }),
 ];
+
+STARTERS.push(...STARTERS2);
 
 /** Replace the project's contents with a starter. */
 export function applyStarter(P, st) {
