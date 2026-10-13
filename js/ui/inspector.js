@@ -68,6 +68,7 @@ export function mountLeft(app, root) {
         h('button', { class: 'sound-btn', onClick: () => { app.view.leftTab = 'sounds'; render(); } }, icon(trackIcon(t), 20), h('div', { style: { flex: 1, minWidth: 0 } }, h('div', { class: 'sb-n' }, name), h('div', { class: 'sb-d' }, desc)), icon('chevronR', 16))));
     }
 
+    if (t.type !== 'audio') body.append(h('div', { class: 'row', style: { padding: '0 14px 10px' } }, button('+ Another line of this sound', () => app.addLine(t.id), { class: 'sm', title: 'A second track with the same instrument and settings, so two can play together' })));
     // smart controls
     if (t.type !== 'audio') {
       const ks = t.type === 'drum' ? [K(t, 'params.tone', 'Tune', { def: 0.5 }), K(t, 'params.release', 'Decay', { def: 1 })]

@@ -48,8 +48,9 @@ export function mountLibrary(app, root) {
     const P = app.project;
     const keyInfo = h('div', { class: 'hint', style: { padding: '0 12px 6px', display: 'flex', alignItems: 'center', gap: '6px' } }, icon('magic', 14), `Loops follow your key: ${NOTE_NAMES[P.key]} ${P.scale}`);
     countEl = h('span', { class: 'hint', style: { marginLeft: 'auto' } }, '');
+    const layerSw = h('label', { class: 'row', style: { gap: '6px' }, title: 'When on, adding a loop puts it on a new line of the selected track\'s sound, so two of the same instrument can play together' }, h('input', { type: 'checkbox', class: 'switch', checked: !!app.settings.loopLayer, onChange: (e) => { app.settings.loopLayer = e.target.checked; app.saveSettings(); } }), h('span', { class: 'hint' }, 'New line each time'));
     body.append(h('div', { style: { padding: '12px 12px 6px', display: 'grid', gap: '8px' } }, search, chips, h('div', { class: 'row', style: { gap: '6px' } }, genre, mood),
-      h('div', { class: 'row', style: { gap: '8px' } }, button('Build a loop…', () => showLoopBuilder(app), { icon: 'magic', class: 'sm primary', title: 'Make your own drum, chord, bass, arpeggio or melody loop' }), countEl)), keyInfo);
+      h('div', { class: 'row', style: { gap: '8px' } }, button('Build a loop…', () => showLoopBuilder(app), { icon: 'magic', class: 'sm primary', title: 'Make your own drum, chord, bass, arpeggio or melody loop' }), layerSw, countEl)), keyInfo);
     list = h('div', { class: 'panel-body', onScroll: () => { if (shown < matches.length && list.scrollTop + list.clientHeight > list.scrollHeight - 500) addMore(); } });
     body.append(list);
     drawList();
@@ -89,7 +90,7 @@ export function mountLibrary(app, root) {
     }
     list.append(frag);
     // the pane may be tall enough to show more than one page: keep going until the list is scrollable
-    if (shown < matches.length && list.scrollHeight <= list.clientHeight + 50) addMore();
+    if (shown < matches.length && list.clientHeight > 0 && list.scrollHeight <= list.clientHeight + 50) addMore();   // (never when the panel has no size: collapsed or hidden)
   }
   function loopRow(l) {
     const pb = h('button', { class: 'playbtn' + (playingId === l.id ? ' on' : ''), title: 'Preview', onClick: (e) => { e.stopPropagation(); toggle(l); } }, icon(playingId === l.id ? 'stop' : 'play', 12));
@@ -99,7 +100,7 @@ export function mountLibrary(app, root) {
       onDblclick: () => { app.engine.previewStopAll(); app.addLoop(l); } },
       pb, h('div', { class: 'li-main' }, h('div', { class: 'li-n' }, l.name), h('div', { class: 'li-s' }, `${l.genre} · ${l.bars} bar${l.bars > 1 ? 's' : ''}${l.bpm ? ' · ' + l.bpm + ' bpm' : ''}${l.kit && KIT_BY_ID[l.kit] ? ' · ' + KIT_BY_ID[l.kit].name : ''}${l.inst && INST_BY_ID[l.inst] ? ' · ' + INST_BY_ID[l.inst].name : ''}`)),
       h('button', { class: 'star' + (favs().has(l.id) ? ' on' : ''), title: 'Favourite', onClick: (e) => { e.stopPropagation(); toggleFav(l, e.currentTarget); } }, favs().has(l.id) ? '★' : '☆'),
-      iconBtn('plus', 'Add to the song', (e) => { e.stopPropagation(); app.engine.previewStopAll(); app.addLoop(l); }, 'sm', 15));
+      iconBtn('plus', 'Add to the song (Shift = on a new line of the same sound)', (e) => { e.stopPropagation(); app.engine.previewStopAll(); app.addLoop(l, e.shiftKey ? { layer: true } : {}); }, 'sm', 15));
     makeDraggable(app, row, () => ({ type: 'loop', id: l.id }), () => l.name);
     return row;
   }

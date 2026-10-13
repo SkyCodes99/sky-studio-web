@@ -134,6 +134,7 @@ export function mountArrange(app, root) {
     const mBtn = h('button', { class: 'mini m' + (t.mute ? ' on' : ''), title: 'Mute', onClick: (e) => { e.stopPropagation(); app.toggleMute(t.id); } }, 'M');
     const sBtn = h('button', { class: 'mini s' + (t.solo ? ' on' : ''), title: 'Solo', onClick: (e) => { e.stopPropagation(); app.toggleSolo(t.id); } }, 'S');
     const btns = [mBtn, sBtn];
+    if (t.type !== 'audio') btns.push(h('button', { class: 'mini', title: 'Add another line with the same sound', onClick: (e) => { e.stopPropagation(); app.addLine(t.id); } }, '+'));
     if (t.type === 'audio') btns.push(h('button', { class: 'mini r' + (t.arm ? ' on' : ''), title: 'Arm for microphone recording', onClick: (e) => { e.stopPropagation(); app.toggleArm(t.id); } }, 'R'));
     const vol = h('input', { type: 'range', class: 'th-vol', min: 0, max: 1, step: 0.005, value: t.vol, title: 'Volume',
       onPointerDown: (e) => e.stopPropagation(), onInput: (e) => app.setTrackProp(t.id, 'vol', +e.target.value, false), onChange: (e) => app.setTrackProp(t.id, 'vol', +e.target.value, true) });
@@ -157,7 +158,8 @@ export function mountArrange(app, root) {
     const x = e.clientX || r.left, y = e.clientY || r.bottom;
     showMenu([
       { label: 'Rename…', onClick: async () => { const n = await promptText('Rename track', t.name); if (n != null && n.trim()) app.setTrackProp(t.id, 'name', n.trim()); } },
-      { label: 'Duplicate track', icon: 'copy', onClick: () => app.duplicateTrack(t.id) },
+      { label: 'Add another line of this sound', icon: 'plus', onClick: () => app.addLine(t.id), disabled: t.type === 'audio' },
+      { label: 'Duplicate track (with its notes)', icon: 'copy', onClick: () => app.duplicateTrack(t.id) },
       { label: 'Move up', icon: 'up', onClick: () => app.moveTrack(t.id, -1) },
       { label: 'Move down', icon: 'down', onClick: () => app.moveTrack(t.id, 1) },
       { sep: true },

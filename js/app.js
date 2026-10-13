@@ -10,7 +10,7 @@ import { beatsPerBar, projectEndBeat } from './audio/events.js';
 import { INST_BY_ID, DEFAULT_PARAMS, prewarm, isBassInst } from './audio/instruments.js';
 import { DEFAULT_PATCH, SYNTH_PRESET_BY_ID, mergePatch } from './audio/synthpatch.js';
 import { KIT_BY_ID, ensureKit, PAD_BASE } from './audio/drums.js';
-import { newProject, newTrack, newRegion, History, plain, serialize, deserialize, sanitize } from './state.js';
+import { newProject, newTrack, newRegion, History, plain, serialize, deserialize, sanitize, TRACK_COLORS } from './state.js';
 import { buildLoop, LOOP_BY_ID, applyStarter } from './library/loops.js';
 import { DURATION_CHOICES, snapToScale } from './theory.js';
 import { fxDefaults } from './audio/fx.js';
@@ -340,6 +340,26 @@ export class App extends Emitter {
     this.sel.track = c.id;
     this.commit('structure'); this.emit('selection');
   }
+  /** Another line of the same sound: a new empty track with the same instrument / kit, knobs, patch and effects ("Piano" -> "Piano 2"). */
+  addLine(id) {
+    const t = this.track(id);
+    if (!t || t.type === 'audio') return null;
+    const c = deep(t);
+    c.id = uid(); c.regions = []; c.mute = false; c.solo = false; c.arm = false;
+    c.fx = (t.fx || []).map((e) => ({ ...deep(e), id: uid() }));
+    const base = t.name.replace(/\s+\d+$/, '');
+    const names = new Set(this.project.tracks.map((x) => x.name));
+    let n = 2; while (names.has(`${base} ${n}`)) n++;
+    c.name = `${base} ${n}`;
+    c.color = TRACK_COLORS[this.project.tracks.length % TRACK_COLORS.length];
+    this.project.tracks.splice(this.project.tracks.indexOf(t) + 1, 0, c);
+    this.engine.strip(c);
+    if (c.type === 'drum') ensureKit(c.kit, this.ctx.sampleRate).then(() => this.emit('change', 'kits'));
+    else if (c.inst !== 'sampler') prewarm(c.inst, this.ctx.sampleRate);
+    this.sel.track = c.id; this.sel.regions = new Set(); this.sel.edit = null;
+    this.commit('structure'); this.emit('selection');
+    return c;
+  }
   moveTrack(id, dir) {
     const a = this.project.tracks, i = a.findIndex((t) => t.id === id), j = i + dir;
     if (i < 0 || j < 0 || j >= a.length) return;
@@ -521,7 +541,13 @@ export class App extends Emitter {
     const b = buildLoop(loop, this.project);
     const type = loop.kind === 'drum' ? 'drum' : 'inst';
     let t = opts.trackId ? this.track(opts.trackId) : null;
-    if (!t) { const st = this.selTrack; if (st && !opts.newTrack && loopCompatible(st, loop) && (!loop.kit || st.kit === loop.kit)) t = st; }   // kit-specific loops get their own drum track
+    if (!t) {
+      const st = this.selTrack;
+      if (st && !opts.newTrack && loopCompatible(st, loop) && (!loop.kit || st.kit === loop.kit)) {
+        // "layer" (or the Loops panel switch): the loop goes on a fresh line of the same sound instead of piling onto this track
+        t = (opts.layer ?? this.settings.loopLayer) && st.regions.length ? this.addLine(st.id) : st;
+      }
+    }   // kit-specific loops get their own drum track
     const empty = !this.project.tracks.length;
     if (!t || !loopCompatible(t, loop)) {
       t = type === 'drum' ? newTrack(this.project, 'drum', { kit: loop.kit || '808', name: loop.genre + ' Drums' }) : newTrack(this.project, 'inst', { inst: loop.inst, name: loop.cat });
